@@ -11,9 +11,9 @@ def quadruped_jump():
     # Initialize simulation
     # Feel free to change these options! (except for control_mode and timestep)
     sim_options = SimulationOptions(
-        on_rack=True,  # Whether to suspend the robot in the air (helpful for debugging)
+        on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
-        record_video=False,  # Whether to record a video to file (needs render=True)
+        record_video=True,  # Whether to record a video to file (needs render=True)
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
@@ -24,7 +24,7 @@ def quadruped_jump():
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0.5, f1=0.5, Fx=0, Fy=0, Fz=-250)
+    force_profile = FootForceProfile(f0=0.2, f1=0.5, Fx=0, Fy=0, Fz=100)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
@@ -74,7 +74,7 @@ def nominal_position(
 
     kpCartesian = np.diag([20,20,25])
     kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.0 ,0.0, 0],[0.0 ,-0.0, 0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
+    des_foot_pos = np.array([[0.1,0.2, -0.2],[0.1,0.2, -0.2],[0.1,0.2, -0.23],[0.1,0.2, -0.14]]) 
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
@@ -93,7 +93,7 @@ def virtual_model(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
-    kpCartesian = np.diag([200,200,250])
+    kpCartesian = np.diag([20,20,25])
     kdCartesian = np.diag([10,10,10])
     des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
 
