@@ -24,7 +24,7 @@ def quadruped_jump():
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0.5, f1=0.5, Fx=0, Fy=0, Fz=50)
+    force_profile = FootForceProfile(f0=0.5, f1=0.5, Fx=0, Fy=0, Fz=-250)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
@@ -48,10 +48,14 @@ def quadruped_jump():
         tau += apply_force_profile(simulator, force_profile)
         tau += gravity_compensation(simulator)
 
+        on_ground = simulator.get_foot_contacts()
+        print("Initial robot base position:", simulator.get_base_position())
+
         # If touching the ground, add virtual model
-        on_ground = True  # TODO: how do we know we're on the ground?
+        on_ground =True  # TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
+
 
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
@@ -61,8 +65,6 @@ def quadruped_jump():
     simulator.close()
 
     # OPTIONAL: add additional functions here (e.g., plotting)
-
-
 def nominal_position(
     simulator: QuadSimulator,
     # OPTIONAL: add potential controller parameters here (e.g., gains)
@@ -93,7 +95,7 @@ def virtual_model(
     # All motor torques are in a single array
     kpCartesian = np.diag([200,200,250])
     kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.0 ,0.0, -0.25],[0.0 ,-0.0, -0.25],[0.0 ,0.0, -0.25],[0.0, -0.0, -0.25]])
+    des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
@@ -147,8 +149,6 @@ def apply_force_profile(
         J, _= simulator.get_jacobian_and_position(leg_id)     # shape (3, N_JOINTS)
 
         tau_i = J.T @ F_foot  
-        tau_i = np.zeros(3)
-
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 
