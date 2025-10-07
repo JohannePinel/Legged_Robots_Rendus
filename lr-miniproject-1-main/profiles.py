@@ -28,7 +28,7 @@ class FootForceProfile:
             dt (float): Timestep duration (s)
         """
 
-        if 0 <= self.theta <= np.pi :            # je definie fi  
+        if 0 <= self.theta <= np.pi :            # je definie fi (donnée)
             fi = self.f1
         else :
             fi = self.f0
