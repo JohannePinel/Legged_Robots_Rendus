@@ -51,6 +51,9 @@ class FootForceProfile:
             Force = self.F * np.sin(self.theta)
         else : 
             Force = np.array([0.0, 0.0, 0.0])
+        
+        #print('Ceci est la Force', Force)
+
         return Force                                # pas sure du return np.ndarray 
 
     def impulse_duration(self) -> float:
