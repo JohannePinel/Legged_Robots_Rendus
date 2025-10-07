@@ -58,10 +58,10 @@ class FootForceProfile:
 
     def impulse_duration(self) -> float:
         """Return impulse duration in seconds."""
-        impulse_sec = 1/self.f0                     # je suppute que le temps c'est 1 sur la freq
+        impulse_sec = 1/2*self.f0                     # je suppute que le temps c'est 1 sur la freq
         return impulse_sec
 
     def idle_duration(self) -> float:
         """Return idle time between impulses in seconds"""
-        idle_sec = 1/self.f1
+        idle_sec = 1/2*self.f1
         return idle_sec
