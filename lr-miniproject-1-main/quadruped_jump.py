@@ -91,20 +91,30 @@ def nominal_position(
     kdCartesian = np.diag([10,10,10])
     des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
 
+    kpJoint = np.array([1,1,1])
+    kdJoint = np.array([0.1,0.1,0.1])
+
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
 
+
         # TODO: compute virtual model torques for leg_id
-        tau_i = np.zeros(3)
+        tau_i_cart = np.zeros(3)
+        
 
         J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
         
         foot_vel = J@ simulator.get_motor_velocities(leg_id)
        
-        tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
-
+        tau_i_cart = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
+        """
+        tau_i_joint = np.zeros(3)
+        reel_pos = simulator.get_motor_angles(leg_id)
+        reel_vit = simulator.get_motor_velocities(leg_id)
+        tau_i_joint = (kpJoint @ (des_foot_pos[leg_id] - reel_pos) + kdJoint @ (-reel_vit))
+        """
         # Store in torques array
-        tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
+        tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i_cart #+ tau_i_joint
 
     return tau
 
@@ -184,7 +194,7 @@ def gravity_compensation(
         tau_i = np.zeros(3)
         J, _= simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
 
-        tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()]))
+        tau_i = J.T @ (-np.array([0, 0, 9.81*simulator.get_mass()]))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
