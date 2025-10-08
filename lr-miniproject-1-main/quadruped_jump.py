@@ -71,7 +71,7 @@ def nominal_position(
 ) -> np.ndarray:
     # All motor torques are in a single array
     # TODO: compute nominal position torques for leg_id
-
+    """
     kpCartesian = np.diag([20,20,25])
     kdCartesian = np.diag([10,10,10])
     des_foot_pos = np.array([[0.1,0.2, -0.2],[0.1,0.2, -0.2],[0.1,0.2, -0.23],[0.1,0.2, -0.14]]) 
@@ -81,20 +81,12 @@ def nominal_position(
         reel_pos = simulator.get_motor_angles(leg_id)
         reel_vit = simulator.get_motor_torques(leg_id)
 
-        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
-        tau_i = J.T@ (kpCartesian @ (des_foot_pos[leg_id] - reel_pos) + kdCartesian @ (-reel_vit))
+        #J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+        tau_i = (kpCartesian @ (des_foot_pos[leg_id] - reel_pos) + kdCartesian @ (-reel_vit))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-    return tau
-
-
-def virtual_model(
-    simulator: QuadSimulator,
-    # OPTIONAL: add potential controller parameters here (e.g., gains)
-) -> np.ndarray:
-    # All motor torques are in a single array
-    
+    """
     kpCartesian = np.diag([20,20,25])
     kdCartesian = np.diag([10,10,10])
     des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
@@ -113,7 +105,36 @@ def virtual_model(
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
+        
+    return tau
 
+
+def virtual_model(
+    simulator: QuadSimulator,
+    # OPTIONAL: add potential controller parameters here (e.g., gains)
+) -> np.ndarray:
+    # All motor torques are in a single array
+    tau = np.zeros(N_JOINTS * N_LEGS)
+    """
+    kpCartesian = np.diag([20,20,25])
+    kdCartesian = np.diag([10,10,10])
+    des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
+
+    tau = np.zeros(N_JOINTS * N_LEGS)
+    for leg_id in range(N_LEGS):
+
+        # TODO: compute virtual model torques for leg_id
+        tau_i = np.zeros(3)
+
+        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+        
+        foot_vel = J@ simulator.get_motor_velocities(leg_id)
+       
+        tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
+
+        # Store in torques array
+        tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
+    """
 
     R = simulator.get_base_orientation_matrix()
     P = np.array([
@@ -132,7 +153,7 @@ def virtual_model(
     tau_vcm = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
         reel_pos = simulator.get_motor_angles(leg_id)
-        reel_vit = simulator.get_motor_torques(leg_id)
+        reel_vit = simulator.get_motor_velocities(leg_id)
 
         J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
 
@@ -142,8 +163,8 @@ def virtual_model(
         # Store in torques array
         tau_vcm[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_vcm_i
 
-    tau += tau_vcm
-
+    #tau += tau_vcm
+    tau = tau_vcm
     return tau
 
 
