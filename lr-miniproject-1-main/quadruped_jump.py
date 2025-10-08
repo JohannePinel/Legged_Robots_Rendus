@@ -49,11 +49,11 @@ def quadruped_jump():
         tau += gravity_compensation(simulator)
 
         on_ground = simulator.get_foot_contacts()
-        print("Initial robot base position:", simulator.get_base_position())
+        #print("Initial robot base position:", simulator.get_base_position())
 
         # If touching the ground, add virtual model
-        on_ground =True  # TODO: how do we know we're on the ground?
-        if on_ground:
+        on_ground = QuadSimulator.get_foot_contacts(simulator)  # TODO: how do we know we're on the ground?
+        if on_ground.any():
             tau += virtual_model(simulator)
 
 
@@ -105,7 +105,7 @@ def nominal_position(
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-        
+
     return tau
 
 
@@ -144,16 +144,20 @@ def virtual_model(
     ]) 
     P = R @ P
     K_vcm = 0.2
+    """
     F_vcm = np.array([
         [0,0,0,0],
         [0,0,0,0],
         K_vcm*([0,0,1]@P)
     ])
+    """
+    F_vcm = np.zeros((3,4))
+    F_vcm[2,:] = K_vcm*([0,0,1] @ P)
     tau_vcm_i = np.zeros(3)
     tau_vcm = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
-        reel_pos = simulator.get_motor_angles(leg_id)
-        reel_vit = simulator.get_motor_velocities(leg_id)
+        #reel_pos = simulator.get_motor_angles(leg_id)
+        #reel_vit = simulator.get_motor_velocities(leg_id)
 
         J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
 
