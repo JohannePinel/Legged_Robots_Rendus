@@ -93,21 +93,26 @@ def virtual_model(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
-    kpCartesian = np.diag([20,20,25])
-    kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
-
+    
+    rot_matrix = np.array([[1,1,-1,-1],[-1,1,-1,1],[0,0,0,0]])
+    F_vmc = np.zeros((3,4))
+    vmc_temp_matrix = np.array([0,0,1])
+    k_vmc = 10 #values to be changed
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
 
         # TODO: compute virtual model torques for leg_id
         tau_i = np.zeros(3)
 
-        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+        J,_ = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
         
-        foot_vel = J@ simulator.get_motor_velocities(leg_id)
+        foot_pos_world = simulator.get_world_foot_position(leg_id)
+
+        P = foot_pos_world @ rot_matrix
+        print(P)
+        F_vmc[2] = k_vmc*(vmc_temp_matrix @ P) # la multiplication matricilielle ne fonctionne pas
        
-        tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
+        tau_i = J.T @ F_vmc
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
