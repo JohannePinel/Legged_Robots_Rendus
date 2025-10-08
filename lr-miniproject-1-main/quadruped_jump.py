@@ -20,7 +20,7 @@ def quadruped_jump():
 
     # Determine number of jumps to simulate
     n_jumps = 10  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    jump_duration = 1.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
@@ -81,7 +81,8 @@ def nominal_position(
         reel_pos = simulator.get_motor_angles(leg_id)
         reel_vit = simulator.get_motor_torques(leg_id)
 
-        tau_i = kpCartesian @ (des_foot_pos[leg_id] - reel_pos) + kdCartesian @ (-reel_vit)
+        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+        tau_i = J.T@ (kpCartesian @ (des_foot_pos[leg_id] - reel_pos) + kdCartesian @ (-reel_vit))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
