@@ -50,7 +50,7 @@ def quadruped_jump():
 
         on_ground = simulator.get_foot_contacts()
         print("Initial robot base position:", simulator.get_base_position())
-
+        
         # If touching the ground, add virtual model
         on_ground =True  # TODO: how do we know we're on the ground?
         if on_ground:
@@ -78,10 +78,11 @@ def nominal_position(
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
-        reel_pos = simulator.get_motor_angles(leg_id)
-        reel_vit = simulator.get_motor_torques(leg_id)
-
-        tau_i = kpCartesian @ (des_foot_pos[leg_id] - reel_pos) + kdCartesian @ (-reel_vit)
+        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+        
+        foot_vel = J@ simulator.get_motor_velocities(leg_id)
+       
+        tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -98,6 +99,13 @@ def virtual_model(
     F_vmc = np.zeros((3,4))
     vmc_temp_matrix = np.array([0,0,1])
     k_vmc = 10 #values to be changed
+
+    base_rot_matrix = simulator.get_base_orientation_matrix() #pas sur si c'est la bonne fonction la 
+
+    P = base_rot_matrix @ rot_matrix
+
+    F_vmc[2] = (k_vmc*(vmc_temp_matrix @ P))
+    print(F_vmc[2])
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
 
@@ -106,13 +114,8 @@ def virtual_model(
 
         J,_ = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
         
-        foot_pos_world = simulator.get_world_foot_position(leg_id)
-
-        P = foot_pos_world @ rot_matrix
-        print(P)
-        F_vmc[2] = k_vmc*(vmc_temp_matrix @ P) # la multiplication matricilielle ne fonctionne pas
-       
-        tau_i = J.T @ F_vmc
+         # la multiplication matricilielle ne fonctionne pas
+        tau_i = J.T @ F_vmc[:,leg_id]
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
