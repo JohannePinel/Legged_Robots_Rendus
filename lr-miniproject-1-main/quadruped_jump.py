@@ -94,6 +94,7 @@ def virtual_model(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
+    
     kpCartesian = np.diag([20,20,25])
     kdCartesian = np.diag([10,10,10])
     des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
@@ -112,6 +113,36 @@ def virtual_model(
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
+
+
+    R = simulator.get_base_orientation_matrix()
+    P = np.array([
+        [1,1,-1,-1],
+        [-1,1,-1,1],
+        [0,0,0,0]
+    ]) 
+    P = R @ P
+    K_vcm = 0.2
+    F_vcm = np.array([
+        [0,0,0,0],
+        [0,0,0,0],
+        K_vcm*([0,0,1]@P)
+    ])
+    tau_vcm_i = np.zeros(3)
+    tau_vcm = np.zeros(N_JOINTS * N_LEGS)
+    for leg_id in range(N_LEGS):
+        reel_pos = simulator.get_motor_angles(leg_id)
+        reel_vit = simulator.get_motor_torques(leg_id)
+
+        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+
+        F_vcm_i = F_vcm[:, leg_id]  # take the force for each leg
+        tau_vcm_i = J.T @ F_vcm_i
+
+        # Store in torques array
+        tau_vcm[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_vcm_i
+
+    tau += tau_vcm
 
     return tau
 
