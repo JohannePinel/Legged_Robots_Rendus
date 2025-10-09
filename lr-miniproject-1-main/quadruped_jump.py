@@ -11,7 +11,7 @@ def quadruped_jump():
     # Initialize simulation
     # Feel free to change these options! (except for control_mode and timestep)
     sim_options = SimulationOptions(
-        on_rack=True,  # Whether to suspend the robot in the air (helpful for debugging)
+        on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
         record_video=False,  # Whether to record a video to file (needs render=True)
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
@@ -67,7 +67,7 @@ def nominal_position(
     simulator: QuadSimulator,
     kpCartesian = np.diag([300,300,50]),
     kdCartesian = np.diag([10,10,10]),
-    des_foot_pos = np.array([[0.1,-0.1, -0.3],[0.1,0.1, -0.3],[-0.1,-0.1, -0.3],[-0.1,0.1, -0.3]]) 
+    des_foot_pos = np.array([[0.1,-0.1, -0.3],[0.1,0.1, -0.3],[-0.1,-0.1, -0.3],[-0.1,0.1, -0.3]]) #the les kp,kd et des_foot_pos sont
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
@@ -111,14 +111,21 @@ def gravity_compensation(
 ) -> np.ndarray:
     # All motor torques are in a single array
     tau = np.zeros(N_JOINTS * N_LEGS)
+    gnd_contact = simulator.get_foot_contacts()
+    # est ce qu'il faut juste diviser par 4 ou savoir sur combien de pied exactement il repose ???
+    foot_div = 1/sum(gnd_contact) #permet de savoir sur cobien de pied doit reposer le robot
     for leg_id in range(N_LEGS):
 
         # TODO: compute gravity compensation torques for leg_id
         tau_i = np.zeros(3)
-
+        J, _= simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
+        if gnd_contact[leg_id]:
+            tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()*foot_div]))
+        else:
+            tau_i = 0
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-
+   
     return tau
 
 
