@@ -45,7 +45,7 @@ def quadruped_jump():
 
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
-        tau += apply_force_profile(simulator, force_profile)
+        #tau += apply_force_profile(simulator, force_profile)
         tau += gravity_compensation(simulator)
 
         on_ground = simulator.get_foot_contacts()
@@ -67,14 +67,14 @@ def quadruped_jump():
     # OPTIONAL: add additional functions here (e.g., plotting)
 def nominal_position(
     simulator: QuadSimulator,
+    kpCartesian = np.diag([300,300,50]),
+    kdCartesian = np.diag([10,10,10]),
+    des_foot_pos = np.array([[0.1,-0.1, -0.3],[0.1,0.1, -0.3],[-0.1,-0.1, -0.3],[-0.1,0.1, -0.3]]) 
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
     # TODO: compute nominal position torques for leg_id
 
-    kpCartesian = np.diag([20,20,25])
-    kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.1,0.2, -0.2],[0.1,0.2, -0.2],[0.1,0.2, -0.23],[0.1,0.2, -0.14]]) 
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
@@ -135,7 +135,7 @@ def gravity_compensation(
         tau_i = np.zeros(3)
         J, _= simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
 
-        tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()]))
+        tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()*0.25]))
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
