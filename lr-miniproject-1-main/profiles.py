@@ -34,10 +34,12 @@ class FootForceProfile:
             fi = self.f0
 
         self.theta += 2 * np.pi * fi * dt        # theta = theta_t + theta_point*dt  et la definition de theta_point est dans la donnee
+        
 
     def phase(self) -> float:
         """Get oscillator phase in [0, 2pi] range."""
         self.theta = self.theta % (2*np.pi)       # je fais modulo 2pi sur theta
+        
         return self.theta
 
     def force(self) -> np.ndarray:
@@ -58,10 +60,10 @@ class FootForceProfile:
 
     def impulse_duration(self) -> float:
         """Return impulse duration in seconds."""
-        impulse_sec = 1/self.f0                     # je suppute que le temps c'est 1 sur la freq
+        impulse_sec = 1/(2*self.f0)                    # je suppute que le temps c'est 1 sur la freq corr: dans la donnee 1/(2*f)
         return impulse_sec
 
     def idle_duration(self) -> float:
         """Return idle time between impulses in seconds"""
-        idle_sec = 1/self.f1
+        idle_sec = 1/(2*self.f1)
         return idle_sec

@@ -65,9 +65,9 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator,
-    kpCartesian = np.diag([300,300,50]),
-    kdCartesian = np.diag([10,10,10]),
-    des_foot_pos = np.array([[0.1,-0.1, -0.3],[0.1,0.1, -0.3],[-0.1,-0.1, -0.3],[-0.1,0.1, -0.3]]) #the les kp,kd et des_foot_pos sont
+    kpCartesian = np.diag([300,300,50]),# valeur arbitraire
+    kdCartesian = np.diag([10,10,10]),# valeur arbitraire
+    des_foot_pos = np.array([[0,-0.0838, -0.25],[0,0.0838, -0.25],[0,-0.0838, -0.25],[0,0.0838, -0.25]]) #position juste en dessous des hanche
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
@@ -112,7 +112,7 @@ def gravity_compensation(
     # All motor torques are in a single array
     tau = np.zeros(N_JOINTS * N_LEGS)
     gnd_contact = simulator.get_foot_contacts()
-    # est ce qu'il faut juste diviser par 4 ou savoir sur combien de pied exactement il repose ???
+    # est ce qu'il faut juste diviser par 4 ou savoir sur combien de pied exactement il repose ???git
     foot_div = 1/sum(gnd_contact) #permet de savoir sur cobien de pied doit reposer le robot
     for leg_id in range(N_LEGS):
 
@@ -136,11 +136,12 @@ def apply_force_profile(
 ) -> np.ndarray:
     # All motor torques are in a single array
     tau = np.zeros(N_JOINTS * N_LEGS)
+    F_foot = force_profile.force()
     for leg_id in range(N_LEGS):
 
         # TODO: compute force profile torques for leg_id
-        tau_i = np.zeros(3)
-
+        J,_ = simulator.get_jacobian_and_position(leg_id)
+        tau_i = J.T @ F_foot
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 
