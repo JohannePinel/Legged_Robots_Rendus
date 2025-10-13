@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
