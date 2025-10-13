@@ -49,8 +49,8 @@ def quadruped_jump():
         tau += gravity_compensation(simulator)
 
         # If touching the ground, add virtual model
-        on_ground = True  # TODO: how do we know we're on the ground?
-        if on_ground:
+        on_ground = all(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
+        if on_ground: 
             tau += virtual_model(simulator)
 
         # Set the motor commands and step the simulation
