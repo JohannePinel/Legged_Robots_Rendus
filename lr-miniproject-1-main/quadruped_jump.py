@@ -20,12 +20,12 @@ def quadruped_jump():
     simulator = QuadSimulator(sim_options)
 
     # Determine number of jumps to simulate
-    n_jumps = 10  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    n_jumps = 7  # Feel free to change this number
+    jump_duration = 2.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0, f1=0, Fx=0, Fy=0, Fz=0)
+    force_profile = FootForceProfile(f0=0.5, f1=0.5, Fx=0, Fy=0, Fz=100)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
@@ -68,7 +68,7 @@ def nominal_position(
     simulator: QuadSimulator,
     kpCartesian = np.diag([300,300,50]),# valeur arbitraire
     kdCartesian = np.diag([10,10,10]),# valeur arbitraire
-    des_foot_pos = np.array([[0,-0.0838, -0.25],[0,0.0838, -0.25],[0,-0.0838, -0.25],[0,0.0838, -0.25]]) #position juste en dessous des hanche
+    des_foot_pos = np.array([[0,-0.0838, -0.2],[0,0.0838, -0.2],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
