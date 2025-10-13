@@ -93,15 +93,21 @@ def virtual_model(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
+    R = simulator.get_base_orientation_matrix()
+    R_world_mat = np.array([[1,1,-1,-1], [-1,1,-1,1],[0,0,0,0]])
+    P = R@R_world_mat
+    k_vmc = 100
+    F_vmc = np.array([[0,0,0,0],[0,0,0,0], k_vmc*([0,0,1]@P)])
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
 
         # TODO: compute virtual model torques for leg_id
-        tau_i = np.zeros(3)
+        J, _ = simulator.get_jacobian_and_position(leg_id)
+        tau_i = J.T @ F_vmc[:, leg_id]
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-
+    
     return tau
 
 
