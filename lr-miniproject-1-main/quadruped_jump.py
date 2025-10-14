@@ -149,6 +149,22 @@ def apply_force_profile(
         J, _= simulator.get_jacobian_and_position(leg_id)     # shape (3, N_JOINTS)
 
         tau_i = J.T @ F_foot  
+
+        # TEST PLANE 
+        R = simulator.get_base_orientation_matrix()  
+        Plane = R @ np.array([
+        [ 1,  1, -1, -1],
+        [-1,  1, -1,  1],
+        [ 0,  0,  0,  0]
+        ])
+        kVMC = 10.0  
+        top = np.zeros((2, 4))
+
+        bottom = kVMC * (np.array([0, 0, 1]) @ Plane).reshape(1, 4)  
+
+        F_VMC = np.vstack([top, bottom])
+
+        tau_i += J.T @ F_VMC.sum(axis=1)
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 
