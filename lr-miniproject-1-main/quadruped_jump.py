@@ -25,7 +25,7 @@ def quadruped_jump():
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=4, f1=2, Fx=0, Fy=0, Fz=100)
+    force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
@@ -65,7 +65,7 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator,
-    kpCartesian = np.diag([500,500,100]),# valeur arbitraire
+    kpCartesian = np.diag([400,400,300]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
     des_foot_pos = np.array([[0,-0.0838, -0.2],[0,0.0838, -0.2],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
@@ -163,7 +163,7 @@ def gravity_compensation(
         if gnd_contact[leg_id]:
             tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()*foot_div]))
             if leg_id <=1 :
-                tau_i = 1.75*tau_i # because we have more weight in the front
+                tau_i = 2*tau_i # because we have more weight in the front
         else:
             tau_i = 0
         # Store in torques array
