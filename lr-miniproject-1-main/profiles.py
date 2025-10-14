@@ -27,12 +27,12 @@ class FootForceProfile:
         Args:
             dt (float): Timestep duration (s)
         """
-
-        if 0 <= self.theta <= np.pi :            # je definie fi (donnée)
+        
+        if 0 <= self.phase() < np.pi :            # je definie fi (donnée)
             fi = self.f1
         else :
             fi = self.f0
-
+        
         self.theta += 2 * np.pi * fi * dt        # theta = theta_t + theta_point*dt  et la definition de theta_point est dans la donnee
         
 
