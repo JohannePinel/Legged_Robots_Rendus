@@ -21,7 +21,7 @@ def quadruped_jump():
 
     # Determine number of jumps to simulate
     n_jumps = 7  # Feel free to change this number
-    jump_duration = 2.0  # TODO: determine how long a jump takes
+    jump_duration = 5.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
@@ -48,7 +48,6 @@ def quadruped_jump():
         tau += nominal_position(simulator)
         tau += apply_force_profile(simulator, force_profile)
         tau += gravity_compensation(simulator)
-
         # If touching the ground, add virtual model
         on_ground = all(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground: 
@@ -120,7 +119,10 @@ def gravity_compensation(
     tau = np.zeros(N_JOINTS * N_LEGS)
     gnd_contact = simulator.get_foot_contacts()
     # est ce qu'il faut juste diviser par 4 ou savoir sur combien de pied exactement il repose ???git
-    foot_div = 1/sum(gnd_contact) #permet de savoir sur cobien de pied doit reposer le robot
+    if sum(gnd_contact) != 0:
+        foot_div = 1/sum(gnd_contact) #permet de savoir sur cobien de pied doit reposer le robot
+    else:
+        foot_div = 0
     for leg_id in range(N_LEGS):
 
         # TODO: compute gravity compensation torques for leg_id
