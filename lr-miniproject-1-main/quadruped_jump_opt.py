@@ -66,8 +66,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 0.0, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.0, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
-    Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
+    Fx = trial.suggest_float(name="Fx", low = -2, high = 2)
+    Fy = trial.suggest_float(name="Fy", low = -2, high = 2)
     Fz = trial.suggest_float(name="Fz", low = 90, high = 300)
 
     # Reset the simulation
@@ -97,7 +97,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         tau += gravity_compensation(simulator)
 
         # If touching the ground, add virtual model
-        on_ground = any(simulator.get_foot_contacts()) # TODO: how do we know we're on the ground?
+        on_ground = all(simulator.get_foot_contacts()) # TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
 
