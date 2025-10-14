@@ -1,6 +1,5 @@
 import numpy as np
 #import matplotlib.pyplot as plt
-#import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
@@ -23,16 +22,13 @@ def quadruped_jump():
     # Determine number of jumps to simulate
     n_jumps = 7  # Feel free to change this number
     jump_duration = 5.0  # TODO: determine how long a jump takes
-    n_jumps = 10  # Feel free to change this number
-    jump_duration = 1.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
-    force_profile = FootForceProfile(f0=0.2, f1=0.2, Fx=0, Fy=0, Fz=100)
+    force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=50, Fz=100)
 
     for _ in range(n_steps):
-        # If the simulator is closed, stop the loop
+        # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
             break
 
@@ -52,15 +48,9 @@ def quadruped_jump():
         tau += nominal_position(simulator)
         tau += apply_force_profile(simulator, force_profile)
         tau += gravity_compensation(simulator)
-
-        on_ground = simulator.get_foot_contacts()
-        print("Initial robot base position:", simulator.get_base_position())
-
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground: 
-        on_ground =True  # TODO: how do we know we're on the ground?
-        if on_ground:
             tau += virtual_model(simulator)
             
         # Set the motor commands and step the simulation
@@ -75,18 +65,15 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator,
-    kpCartesian = np.diag([400,400,300]),# valeur arbitraire
+    kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
-    des_foot_pos = np.array([[0,-0.0838, -0.2],[0,0.0838, -0.2],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
+    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
     # TODO: compute nominal position torques for leg_id
 
-    kpCartesian = np.diag([20,20,25])
-    kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.1,0.2, -0.2],[0.1,0.2, -0.2],[0.1,0.2, -0.23],[0.1,0.2, -0.14]]) 
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
@@ -96,10 +83,6 @@ def nominal_position(
        
         tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
         tau_i += kdJoint @ (-simulator.get_motor_velocities(leg_id))
-        reel_pos = simulator.get_motor_angles(leg_id)
-        reel_vit = simulator.get_motor_torques(leg_id)
-
-        tau_i = kpCartesian @ (des_foot_pos[leg_id] - reel_pos) + kdCartesian @ (-reel_vit)
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -147,21 +130,12 @@ def virtual_model(
     P = R@R_world_mat
     k_vmc = 200
     F_vmc = np.array([[0,0,0,0],[0,0,0,0], k_vmc*([0,0,1]@P)])
-    kpCartesian = np.diag([20,20,25])
-    kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
-
     tau = np.zeros(N_JOINTS * N_LEGS)
     for leg_id in range(N_LEGS):
 
         # TODO: compute virtual model torques for leg_id
-        tau_i = np.zeros(3)
-
-        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
-        
-        foot_vel = J@ simulator.get_motor_velocities(leg_id)
-       
-        tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
+        J, _ = simulator.get_jacobian_and_position(leg_id)
+        tau_i = J.T @ F_vmc[:, leg_id]
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
@@ -188,13 +162,10 @@ def gravity_compensation(
         J, _= simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
         if gnd_contact[leg_id]:
             tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()*foot_div]))
-            if leg_id <=1 :
-                tau_i = 2*tau_i # because we have more weight in the front
+            #if leg_id <=1 :
+            #    tau_i = 2*tau_i # because we have more weight in the front
         else:
             tau_i = 0
-
-        tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()]))
-
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
    
@@ -207,16 +178,41 @@ def apply_force_profile(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
+
+    Forward_jump = False
+    Lateral_jump = True
+    Twist_clock_jump = False
+
     tau = np.zeros(N_JOINTS * N_LEGS)
     F_foot = force_profile.force()
     for leg_id in range(N_LEGS):
 
+        if Forward_jump:             # Les jambes arrières 0 en x et Fz en z
+            if leg_id in [0, 1]:
+                F_foot[0] = 0
+            if leg_id in [2, 3]:
+                F_foot[0] *= 1.5
+                F_foot[2] *= 1.25
+
+        if Lateral_jump:            # Test
+            if leg_id in [1, 3]:
+                F_foot[1] *= 0.5
+            if leg_id in [0, 2]:
+                F_foot[1] *= 1
+            # if leg_id in [0, 1]:  # pattes avant
+            #     F_foot[1] *= 0.5
+
+
+        if Twist_clock_jump:            
+            if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
+                F_foot[1] = -F_foot[1]
+    
+
+        
+
         # TODO: compute force profile torques for leg_id
-
-        F_foot = force_profile.force()
-        J, _= simulator.get_jacobian_and_position(leg_id)     # shape (3, N_JOINTS)
-
-        tau_i = J.T @ F_foot  
+        J,_ = simulator.get_jacobian_and_position(leg_id)
+        tau_i = J.T @ F_foot
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
 
