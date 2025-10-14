@@ -25,7 +25,10 @@ def quadruped_jump():
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
+    
+    #force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
+    #force_profile = FootForceProfile(f0=4.914062263174487, f1=2.9930935444720457, Fx=-16.978277585461328, Fy=-18.28878707223232, Fz=59.269050854384126)
+    force_profile = FootForceProfile(f0=1.873, f1=4.754, Fx=2.320, Fy=0.987, Fz=122.764)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
