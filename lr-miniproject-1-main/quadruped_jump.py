@@ -85,7 +85,7 @@ def nominal_position(
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-    """
+    
     kpCartesian = np.diag([20,20,25])
     kdCartesian = np.diag([10,10,10])
     des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
