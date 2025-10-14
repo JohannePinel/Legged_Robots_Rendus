@@ -65,10 +65,10 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator,
-    kpCartesian = np.diag([400,400,300]),# valeur arbitraire
+    kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
-    des_foot_pos = np.array([[0,-0.0838, -0.2],[0,0.0838, -0.2],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
+    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
@@ -86,36 +86,7 @@ def nominal_position(
 
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-    """"
-    kpCartesian = np.diag([20,20,25])
-    kdCartesian = np.diag([10,10,10])
-    des_foot_pos = np.array([[0.0 ,0.0, -0.0],[0.0 ,-0.0, -0.0],[0.0 ,0.0, -0.0],[0.0, -0.0, -0.0]])
-
-    kpJoint = np.array([1,1,1])
-    kdJoint = np.array([0.1,0.1,0.1])
-
-    tau = np.zeros(N_JOINTS * N_LEGS)
-    for leg_id in range(N_LEGS):
-
-
-        # TODO: compute virtual model torques for leg_id
-        tau_i_cart = np.zeros(3)
-        
-
-        J, pos = simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
-        
-        foot_vel = J@ simulator.get_motor_velocities(leg_id)
-       
-        tau_i_cart = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
-        
-        tau_i_joint = np.zeros(3)
-        reel_pos = simulator.get_motor_angles(leg_id)
-        reel_vit = simulator.get_motor_velocities(leg_id)
-        tau_i_joint = (kpJoint @ (des_foot_pos[leg_id] - reel_pos) + kdJoint @ (-reel_vit))
-        
-        # Store in torques array
-        tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i_cart #+ tau_i_joint
-    """
+    
     return tau
 
 
@@ -162,8 +133,8 @@ def gravity_compensation(
         J, _= simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
         if gnd_contact[leg_id]:
             tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()*foot_div]))
-            if leg_id <=1 :
-                tau_i = 2*tau_i # because we have more weight in the front
+            #if leg_id <=1 :
+                #tau_i = 2*tau_i # because we have more weight in the front
         else:
             tau_i = 0
         # Store in torques array
