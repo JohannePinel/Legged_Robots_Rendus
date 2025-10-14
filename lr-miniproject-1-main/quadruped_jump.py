@@ -25,7 +25,7 @@ def quadruped_jump():
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=50, Fz=100)
+    force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=100, Fz=100)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loopS
@@ -187,6 +187,7 @@ def apply_force_profile(
     F_foot = force_profile.force()
     for leg_id in range(N_LEGS):
 
+
         if Forward_jump:             # Les jambes arrières 0 en x et Fz en z
             if leg_id in [0, 1]:
                 F_foot[0] = 0
@@ -194,11 +195,8 @@ def apply_force_profile(
                 F_foot[0] *= 1.5
                 F_foot[2] *= 1.25
 
-        if Lateral_jump:            # Test
-            if leg_id in [1, 3]:
-                F_foot[1] *= 0.5
-            if leg_id in [0, 2]:
-                F_foot[1] *= 1
+        if Lateral_jump:            # Tombe après few try
+            F_foot[1] *= 0.25
             # if leg_id in [0, 1]:  # pattes avant
             #     F_foot[1] *= 0.5
 
