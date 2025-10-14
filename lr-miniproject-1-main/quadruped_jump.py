@@ -52,7 +52,7 @@ def quadruped_jump():
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground: 
             tau += virtual_model(simulator)
-
+            
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
