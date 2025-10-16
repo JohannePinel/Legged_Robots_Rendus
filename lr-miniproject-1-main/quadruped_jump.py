@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
@@ -20,12 +20,12 @@ def quadruped_jump():
     simulator = QuadSimulator(sim_options)
 
     # Determine number of jumps to simulate
-    n_jumps = 7  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    n_jumps = 10  # Feel free to change this number
+    jump_duration = 1.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0.5, f1=0.5, Fx=0, Fy=0, Fz=100)
+    force_profile = FootForceProfile(f0=0.2, f1=0.2, Fx=0, Fy=0, Fz=100)
 
     for _ in range(n_steps):
         # If the simulator is closed, stop the loop
