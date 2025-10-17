@@ -40,7 +40,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=20)
+    study.optimize(objective, n_trials=6)
 
     # Close the simulation
     simulator.close()
@@ -62,7 +62,13 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # TODO: pick optimization variables
     # The following function creates an optimization variable with given name and lower and upper bounds
     # You can then plug in the value in your controller
-    variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
+   
+    #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
+    f0 = trial.suggest_float(name="f0", low = 0.0, high = 5)
+    f1 = trial.suggest_float(name="f1", low = 0.0, high = 5)
+    Fx = trial.suggest_float(name="Fx", low = -2, high = 2)
+    Fy = trial.suggest_float(name="Fy", low = -2, high = 2)
+    Fz = trial.suggest_float(name="Fz", low = 90, high = 300)
 
     # Reset the simulation
     simulator.reset()
@@ -71,12 +77,13 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     sim_options = simulator.options
 
     # Determine number of jumps to simulate
-    n_jumps = 1  # Feel free to change this number
+    n_jumps = 2  # Feel free to change this number
     jump_duration = 5.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=0, f1=0, Fx=0, Fy=0, Fz=0)
+    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=Fy, Fz=Fz)
+    max_height = -99 # to initialize tracking
 
     for _ in range(n_steps):
         # Step the oscillator
@@ -90,7 +97,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         tau += gravity_compensation(simulator)
 
         # If touching the ground, add virtual model
-        on_ground = True  # TODO: how do we know we're on the ground?
+        on_ground = all(simulator.get_foot_contacts()) # TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
 
@@ -100,7 +107,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     # TODO: implement an objective function and return its value
     # Note: the objective function is maximized!
-    return 0
+    base_pos = simulator.get_base_position()
+    max_height = max(base_pos[2], max_height)
+
+    return max_height
 
 
 if __name__ == "__main__":
