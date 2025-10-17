@@ -8,6 +8,10 @@ N_LEGS = 4
 N_JOINTS = 3
 
 
+Forward_jump = False
+Lateral_jump = True
+Twist_clock_jump = False
+
 def quadruped_jump():
     # Initialize simulation
     # Feel free to change these options! (except for control_mode and timestep)
@@ -26,9 +30,9 @@ def quadruped_jump():
 
     # TODO: set parameters for the foot force profile here
     
-    #force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
+    force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100)
 
-    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0.05693775365444642, Fy=0.36965827544816987, Fz=99.75458667119952)
+    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0.05693775365444642, Fy=0.36965827544816987, Fz=99.75458667119952)
 
 
     for _ in range(n_steps):
@@ -56,6 +60,11 @@ def quadruped_jump():
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground: 
             tau += virtual_model(simulator)
+        else :
+            if Lateral_jump :
+                des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]]) #position juste en dessous des hanche
+                tau -= nominal_position(simulator)
+                tau += nominal_position(simulator, des_foot_position)
             
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
@@ -69,14 +78,20 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator,
+    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]), #position juste en dessous des hanche
     kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
-    kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
-    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
+    kdJoint = np.diag([0.1,0.1,0.1])# valeur arbitraire
+    
+        
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
     # TODO: compute nominal position torques for leg_id
+
+    #if Lateral_jump :
+     #   des_foot_pos = np.array([[0,-0.1, -0.275],[0,0.4, -0.175],[0,-0.1, -0.2],[0,0.4, -0.1]]) #position juste en dessous des hanche
+
 
 
     tau = np.zeros(N_JOINTS * N_LEGS)
@@ -154,10 +169,6 @@ def apply_force_profile(
 ) -> np.ndarray:
     # All motor torques are in a single array
 
-    Forward_jump = False
-    Lateral_jump = True
-    Twist_clock_jump = False
-
     tau = np.zeros(N_JOINTS * N_LEGS)
     F_foot = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
@@ -172,10 +183,13 @@ def apply_force_profile(
 
         if Lateral_jump:            # Tombe après few try
             F_foot[0] = 0
-            if leg_id == (0 or 2):  # pattes avant
+            #if leg_id == (0 or 2):  # pattes avant
+            if leg_id == (0):  # pattes avant
                 F_foot[1] *= 1
-                F_foot[2] *= 1.3
-
+                F_foot[2] *= 1
+            if leg_id == (2):  # pattes avant
+                F_foot[1] *= 0.95
+                F_foot[2] *= 1
 
         if Twist_clock_jump:            
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
