@@ -1,6 +1,5 @@
 import numpy as np
 #import matplotlib.pyplot as plt
-#import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
@@ -71,10 +70,8 @@ def quadruped_jump():
 def nominal_position(
     simulator: QuadSimulator,
     kpCartesian = np.diag([400,400,200]),# valeur arbitraire
-    kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
-    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
