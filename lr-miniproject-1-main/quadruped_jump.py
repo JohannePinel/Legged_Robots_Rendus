@@ -8,8 +8,8 @@ N_LEGS = 4
 N_JOINTS = 3
 
 
-Forward_jump = False
-Lateral_jump = True
+Forward_jump = True
+Lateral_jump = False
 Twist_clock_jump = False
 
 def quadruped_jump():
@@ -63,6 +63,10 @@ def quadruped_jump():
         else :
             if Lateral_jump :
                 des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.3],[0,0.4, 0.1]]) #position juste en dessous des hanche
+                tau -= nominal_position(simulator)
+                tau += nominal_position(simulator, des_foot_position)
+            elif Forward_jump :
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.01,-0.0838, -0.2],[0.01,0.0838, -0.2]])
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
             
