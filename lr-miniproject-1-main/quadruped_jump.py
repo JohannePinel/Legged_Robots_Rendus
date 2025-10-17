@@ -33,7 +33,7 @@ def quadruped_jump():
 
 
     for _ in range(n_steps):
-        # If the simulator is closed, stop the loop
+        # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
             break
 
@@ -71,8 +71,10 @@ def quadruped_jump():
 def nominal_position(
     simulator: QuadSimulator,
     kpCartesian = np.diag([400,400,200]),# valeur arbitraire
+    kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
+    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
@@ -154,9 +156,36 @@ def apply_force_profile(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
+
+    Forward_jump = False
+    Lateral_jump = True
+    Twist_clock_jump = False
+
     tau = np.zeros(N_JOINTS * N_LEGS)
-    F_foot = force_profile.force()
+    F_foot = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
+
+
+        if Forward_jump:             # # avance un droit mais derive un peu de cote
+            F_foot[1] = 0
+            if leg_id in [0, 1]:
+                F_foot[0] *= 1
+                F_foot[2] *= 1.3
+
+
+        if Lateral_jump:            # Tombe après few try
+            F_foot[0] = 0
+            if leg_id == (0 or 2):  # pattes avant
+                F_foot[1] *= 1
+                F_foot[2] *= 1.3
+
+
+        if Twist_clock_jump:            
+            if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
+                F_foot[1] = -F_foot[1]
+    
+
+        
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)
