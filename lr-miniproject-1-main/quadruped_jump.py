@@ -62,7 +62,7 @@ def quadruped_jump():
             tau += virtual_model(simulator)
         else :
             if Lateral_jump :
-                des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]]) #position juste en dessous des hanche
+                des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.3],[0,0.4, 0.1]]) #position juste en dessous des hanche
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
             
@@ -185,11 +185,11 @@ def apply_force_profile(
             F_foot[0] = 0
             #if leg_id == (0 or 2):  # pattes avant
             if leg_id == (0):  # pattes avant
-                F_foot[1] *= 1
-                F_foot[2] *= 1
+                F_foot[1] *= 1.2
+                F_foot[2] *= 0.9
             if leg_id == (2):  # pattes avant
-                F_foot[1] *= 0.95
-                F_foot[2] *= 1
+                F_foot[1] *= 1.0
+                F_foot[2] *= 0.9
 
         if Twist_clock_jump:            
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
