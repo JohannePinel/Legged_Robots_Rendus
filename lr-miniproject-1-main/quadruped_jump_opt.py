@@ -107,10 +107,14 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     # TODO: implement an objective function and return its value
     # Note: the objective function is maximized!
-    base_pos = simulator.get_base_position()
-    max_height = max(base_pos[2], max_height)
+    
+    #base_pos = simulator.get_base_position()
+    #max_height = max(base_pos[2], max_height)
 
-    return max_height
+    #orientation_base = simulator.get_base_orientation_roll_pitch_yaw()
+    #min_roll_pitch = min(orientation_base)
+
+    return 0
 
 
 if __name__ == "__main__":
