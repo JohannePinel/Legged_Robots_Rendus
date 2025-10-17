@@ -1,6 +1,5 @@
 import numpy as np
 #import matplotlib.pyplot as plt
-#import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
@@ -33,7 +32,7 @@ def quadruped_jump():
 
 
     for _ in range(n_steps):
-        # If the simulator is closed, stop the loop
+        # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
             break
 
@@ -154,9 +153,37 @@ def apply_force_profile(
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
+
+    Forward_jump = False
+    Lateral_jump = True
+    Twist_clock_jump = False
+
     tau = np.zeros(N_JOINTS * N_LEGS)
-    F_foot = force_profile.force()
+    F_foot = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
+
+
+        if Forward_jump:             # # avance un droit mais derive un peu de cote
+            F_foot[1] = 0
+            if leg_id in [0, 1]:
+                F_foot[0] *= 1
+                F_foot[2] *= 1.3
+
+
+        if Lateral_jump:            # Tombe après few try
+            F_foot[0] = 0
+            if leg_id == (0 or 2):  # pattes avant
+                F_foot[1] *= 1
+                F_foot[2] *= 1.3
+
+
+        if Twist_clock_jump:            
+            if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
+                F_foot[1] = -F_foot[1]
+    
+
+        
+
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)
