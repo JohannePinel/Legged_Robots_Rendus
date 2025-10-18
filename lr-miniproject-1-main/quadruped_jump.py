@@ -26,10 +26,9 @@ def quadruped_jump():
 
     # TODO: set parameters for the foot force profile here
     
-    #force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
-    force_profile = FootForceProfile(f0= 2, f1=0.7, Fx=100, Fy=0, Fz=70) #force_profile for a foraward jumpe taht is stable but turns a little bit
+    #force_profile = FootForceProfile(f0= 2, f1=0.7, Fx=100, Fy=0, Fz=70) #force_profile for a foraward jumpe taht is stable but turns a little bit
     #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=30, Fz=100) #force profile lateral jump mais pas stable du tout
-    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
+    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
 
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
@@ -42,36 +41,7 @@ def quadruped_jump():
 
         # Step the oscillator
         force_profile.step(sim_options.timestep)
-
-        # Record the actual per-leg force used by the controller.
-        # We replicate the per-leg modifications performed inside apply_force_profile
-        """cette partie doit etre revue car une copie de apply forces trouver moyen de l'incomrporer"""
-        base_F = np.array(force_profile.force(), dtype=float)
-        for leg_id in range(N_LEGS):
-            F_leg = base_F.copy()
-
-            Forward_jump = True
-            Lateral_jump = False
-            Twist_clock_jump = False
-
-            if Forward_jump:
-                F_leg[1] = 0
-                if leg_id in [0, 1]:
-                    F_leg[0] *= 1
-                    F_leg[2] *= 1.3
-
-            if Lateral_jump:
-                F_leg[0] = 0
-                if leg_id in [0, 2]:
-                    F_leg[1] *= 1
-                    F_leg[2] *= 1.3
-
-            if Twist_clock_jump:
-                F_leg[0] = 0
-                if leg_id in [0, 1]:
-                    F_leg[1] = -F_leg[1]
-
-            foot_forces[recorded_steps, leg_id, :] = F_leg
+              
 
         # Compute torques as motor targets
         # The convention is as follows:
@@ -84,7 +54,8 @@ def quadruped_jump():
 
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
-        tau += apply_force_profile(simulator, force_profile)
+        tau += apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[0]
+        foot_forces[recorded_steps, :, :] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1]
         tau += gravity_compensation(simulator)
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
@@ -95,6 +66,7 @@ def quadruped_jump():
         simulator.set_motor_targets(tau)
         simulator.step()
         recorded_steps += 1
+
 
     # Close the simulation
     simulator.close()
@@ -214,12 +186,14 @@ def apply_force_profile(
     simulator: QuadSimulator,
     force_profile: FootForceProfile,
     # OPTIONAL: add potential controller parameters here (e.g., gains)
+    foot_forces,
+    recorded_steps
 ) -> np.ndarray:
     # All motor torques are in a single array
 
-    Forward_jump = True
+    Forward_jump = False
     Lateral_jump = False
-    Twist_clock_jump = False
+    Twist_clock_jump = True
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     F_foot = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
@@ -254,8 +228,7 @@ def apply_force_profile(
         tau_i = J.T @ F_foot
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
-
-    return tau
+    return [tau, F_foot] #ajout de F_foot en sortie pour pouvoir l'afficher dans un graph
 
 
 if __name__ == "__main__":
