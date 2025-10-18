@@ -27,8 +27,9 @@ def quadruped_jump():
     # TODO: set parameters for the foot force profile here
     
     #force_profile = FootForceProfile(f0=2, f1=2, Fx=0, Fy=0, Fz=100)
-
-    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0.05693775365444642, Fy=0.36965827544816987, Fz=99.75458667119952)
+    force_profile = FootForceProfile(f0= 2, f1=0.7, Fx=100, Fy=0, Fz=70) #force_profile for a foraward jumpe taht is stable but turns a little bit
+    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=30, Fz=100) #force profile lateral jump mais pas stable du tout
+    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
 
 
     for _ in range(n_steps):
@@ -87,7 +88,9 @@ def nominal_position(
        
         tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
         tau_i += kdJoint @ (-simulator.get_motor_velocities(leg_id))
-
+        """print("ptich",simulator.get_base_orientation_roll_pitch_yaw())
+        print("linear",simulator.get_base_linear_velocity())
+        print("angular",simulator.get_base_angular_velocity())"""
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
     
@@ -154,8 +157,8 @@ def apply_force_profile(
 ) -> np.ndarray:
     # All motor torques are in a single array
 
-    Forward_jump = False
-    Lateral_jump = True
+    Forward_jump = True
+    Lateral_jump = False
     Twist_clock_jump = False
 
     tau = np.zeros(N_JOINTS * N_LEGS)
@@ -177,7 +180,8 @@ def apply_force_profile(
                 F_foot[2] *= 1.3
 
 
-        if Twist_clock_jump:            
+        if Twist_clock_jump:
+            F_foot[0] = 0            
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
                 F_foot[1] = -F_foot[1]
     
