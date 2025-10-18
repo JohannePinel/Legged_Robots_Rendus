@@ -1,5 +1,5 @@
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
@@ -21,7 +21,7 @@ def quadruped_jump():
 
     # Determine number of jumps to simulate
     n_jumps = 7  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    jump_duration = 3.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
@@ -31,14 +31,47 @@ def quadruped_jump():
     #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=30, Fz=100) #force profile lateral jump mais pas stable du tout
     #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
 
+    # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
+    foot_forces = np.zeros((n_steps, N_LEGS, 3))
+    recorded_steps = 0
 
-    for _ in range(n_steps):
+    for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
             break
 
         # Step the oscillator
         force_profile.step(sim_options.timestep)
+
+        # Record the actual per-leg force used by the controller.
+        # We replicate the per-leg modifications performed inside apply_force_profile
+        """cette partie doit etre revue car une copie de apply forces trouver moyen de l'incomrporer"""
+        base_F = np.array(force_profile.force(), dtype=float)
+        for leg_id in range(N_LEGS):
+            F_leg = base_F.copy()
+
+            Forward_jump = True
+            Lateral_jump = False
+            Twist_clock_jump = False
+
+            if Forward_jump:
+                F_leg[1] = 0
+                if leg_id in [0, 1]:
+                    F_leg[0] *= 1
+                    F_leg[2] *= 1.3
+
+            if Lateral_jump:
+                F_leg[0] = 0
+                if leg_id in [0, 2]:
+                    F_leg[1] *= 1
+                    F_leg[2] *= 1.3
+
+            if Twist_clock_jump:
+                F_leg[0] = 0
+                if leg_id in [0, 1]:
+                    F_leg[1] = -F_leg[1]
+
+            foot_forces[recorded_steps, leg_id, :] = F_leg
 
         # Compute torques as motor targets
         # The convention is as follows:
@@ -55,17 +88,44 @@ def quadruped_jump():
         tau += gravity_compensation(simulator)
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
-        if on_ground: 
+        if on_ground:
             tau += virtual_model(simulator)
             
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
+        recorded_steps += 1
 
     # Close the simulation
     simulator.close()
 
-    # OPTIONAL: add additional functions here (e.g., plotting)
+    # Trim recorded array in case the loop exited early
+    foot_forces = foot_forces[:recorded_steps]
+
+    # Plot force components per foot vs simulation step (one row per foot, three columns for Fx,Fy,Fz)
+    steps = np.arange(recorded_steps)
+    foot_names = ['FR', 'FL', 'RR', 'RL']
+    comp_labels = ['Fx', 'Fy', 'Fz']
+
+    fig, axs = plt.subplots(N_LEGS, 3, figsize=(12, 9), sharex=True)
+    # If recorded_steps == 0 avoid plotting
+    if recorded_steps > 0:
+        for leg_id in range(N_LEGS):
+            for comp in range(3):
+                ax = axs[leg_id, comp]
+                ax.plot(steps, foot_forces[:, leg_id, comp], label=f'{foot_names[leg_id]} {comp_labels[comp]}', color=f'C{comp}')
+                if leg_id == 0:
+                    ax.set_title(comp_labels[comp])
+                if comp == 0:
+                    ax.set_ylabel(foot_names[leg_id])
+                ax.grid(True)
+
+        axs[-1, 1].set_xlabel('Simulation step')
+        plt.suptitle('Per-foot force components over simulation steps')
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.show()
+    else:
+        print("No simulation data recorded - nothing to plot.")
 
 
 def nominal_position(
@@ -187,6 +247,7 @@ def apply_force_profile(
     
 
         
+
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)
