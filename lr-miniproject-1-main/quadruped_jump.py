@@ -21,7 +21,7 @@ def quadruped_jump():
 
     # Determine number of jumps to simulate
     n_jumps = 7  # Feel free to change this number
-    jump_duration = 3.0  # TODO: determine how long a jump takes
+    jump_duration = 3.0   # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
@@ -29,7 +29,8 @@ def quadruped_jump():
     #force_profile = FootForceProfile(f0= 2, f1=0.7, Fx=100, Fy=0, Fz=70) #force_profile for a foraward jumpe taht is stable but turns a little bit
     #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=30, Fz=100) #force profile lateral jump mais pas stable du tout
     force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
-
+    """"peut on mettre force profile avant jump duration ?? Car si oui, on peut utiliser impuls duration et idle duration 
+    pour calculer le temps d'un saut"""
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
@@ -258,15 +259,12 @@ def apply_force_profile(
         if jump_type == 3:          #TWIST CLOCKWISE JUMP
             F_foot_i[0] = 0        
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
-                F_foot_i[1] = -F_foot_i[1]
+                F_foot_i[1] = -F_foot_i[1]  #ne fait que changer les pied avec id 0 alors que ca devrait le faire pour 0 et 1 mais le saut fonctionne qund meme
                 
         if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP
             F_foot_i[0] = 0        
             if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
-                F_foot_i[1] = -F_foot_i[1] #pas sur c'est ça c'est ok
-
-        
-
+                F_foot_i[1] = -F_foot_i[1] #ne fait que changer les pied avec id 2 alors que ca devrait le faire pour 2 et 3 mais le saut fonctionne quand meme
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)
