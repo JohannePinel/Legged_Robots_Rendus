@@ -60,7 +60,7 @@ def quadruped_jump():
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground:
-            tau += 0 #virtual_model(simulator)
+            tau += virtual_model(simulator)
         # to record the value of the applied force and tau for each leg in each direction
         for i in range(N_LEGS):
             for j in range(N_JOINTS):
