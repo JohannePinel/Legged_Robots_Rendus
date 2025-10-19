@@ -60,7 +60,7 @@ def quadruped_jump():
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground:
-            tau += virtual_model(simulator)
+            tau += 0 #virtual_model(simulator)
         # to record the value of the applied force and tau for each leg in each direction
         for i in range(N_LEGS):
             for j in range(N_JOINTS):
@@ -80,25 +80,27 @@ def quadruped_jump():
     foot_forces = foot_forces[:recorded_steps]
     tau_rec = tau_rec[:recorded_steps]
 
-    # Plot force components per foot vs simulation step (one row per foot, three columns for Fx,Fy,Fz)
+    # Plot force components per foot vs simulation step
     steps = np.arange(recorded_steps)
     foot_names = ['FR', 'FL', 'RR', 'RL']
-    comp_labels_F = ['Fx', 'Fy', 'Fz']
+    comp_labels_F = ['Fx [N]', 'Fy [N]', 'Fz [N]']
 
-    fig, axs = plt.subplots(N_LEGS, 3, figsize=(12, 9), sharex=True)
-    # If recorded_steps == 0 avoid plotting
+    # Now rows = components (Fx,Fy,Fz) and columns = feet (FR,FL,RR,RL)
+    fig, axs = plt.subplots(len(comp_labels_F), N_LEGS, figsize=(12, 9), sharex=True)
     if recorded_steps > 0:
-        for leg_id in range(N_LEGS):
-            for comp in range(3):
-                ax = axs[leg_id, comp]
-                ax.plot(steps, foot_forces[:, leg_id, comp], label=f'{foot_names[leg_id]} {comp_labels_F[comp]}', color=f'C{comp}')
-                if leg_id == 0:
-                    ax.set_title(comp_labels_F[comp])
+        for comp in range(3):
+            for leg_id in range(N_LEGS):
+                ax = axs[comp, leg_id]
+                ax.plot(steps, foot_forces[:, leg_id, comp], label=f'{comp_labels_F[comp]} {foot_names[leg_id]}', color=f'C{leg_id}')
+                # set column titles to foot names
                 if comp == 0:
-                    ax.set_ylabel(foot_names[leg_id])
+                    ax.set_title(foot_names[leg_id])
+                # set row y-labels to component labels
+                if leg_id == 0:
+                    ax.set_ylabel(comp_labels_F[comp])
                 ax.grid(True)
 
-        axs[-1, 1].set_xlabel('Simulation step')
+        axs[-1, 0].set_xlabel('Simulation step')
         plt.suptitle('Per-foot force components over simulation steps')
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
@@ -107,20 +109,24 @@ def quadruped_jump():
 
     # --- New: plot motor torque components recorded in tau_rec ---
     # tau_rec has shape (steps, N_LEGS, 3) and stores per-leg per-joint torque values
-    comp_labels_tau = ['tau_hip', 'tau_thigh', 'tau_calf']
-    fig2, axs2 = plt.subplots(N_LEGS, 3, figsize=(12, 9), sharex=True)
+    comp_labels_tau = ['tau hip [Nm]', 'tau thigh [Nm]', 'tau calf [Nm]']
+
+    # Now rows = components (hip,thigh,calf) and columns = feet (FR,FL,RR,RL)
+    fig2, axs2 = plt.subplots(len(comp_labels_tau), N_LEGS, figsize=(12, 9), sharex=True)
     if recorded_steps > 0:
-        for leg_id in range(N_LEGS):
-            for comp in range(3):
-                ax = axs2[leg_id, comp]
-                ax.plot(steps, tau_rec[:, leg_id, comp], label=f'{foot_names[leg_id]} {comp_labels_tau[comp]}', color=f'C{comp+3}')
-                if leg_id == 0:
-                    ax.set_title(comp_labels_tau[comp])
+        for comp in range(3):
+            for leg_id in range(N_LEGS):
+                ax = axs2[comp, leg_id]
+                ax.plot(steps, tau_rec[:, leg_id, comp], label=f'{comp_labels_tau[comp]} {foot_names[leg_id]}', color=f'C{leg_id+4}')
+                # set column titles to foot names
                 if comp == 0:
-                    ax.set_ylabel(foot_names[leg_id])
+                    ax.set_title(foot_names[leg_id])
+                # set row y-labels to component labels
+                if leg_id == 0:
+                    ax.set_ylabel(comp_labels_tau[comp])
                 ax.grid(True)
 
-        axs2[-1, 1].set_xlabel('Simulation step')
+        axs2[-1, 0].set_xlabel('Simulation step')
         plt.suptitle('Per-foot motor torque components over simulation steps')
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.show()
