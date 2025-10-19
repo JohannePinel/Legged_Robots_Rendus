@@ -9,8 +9,10 @@ N_JOINTS = 3
 
 
 Forward_jump = True
-Lateral_jump = False
+Lateral_jump_1 = False
+Lateral_jump_2 = False
 Twist_clock_jump = False
+Twist_cclock_jump = False
 
 def quadruped_jump():
     # Initialize simulation
@@ -30,9 +32,9 @@ def quadruped_jump():
 
     # TODO: set parameters for the foot force profile here
     
-    force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100)
+    #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100)
 
-    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0.05693775365444642, Fy=0.36965827544816987, Fz=99.75458667119952)
+    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100)
 
 
     for _ in range(n_steps):
@@ -61,12 +63,16 @@ def quadruped_jump():
         if on_ground: 
             tau += virtual_model(simulator)
         else :
-            if Lateral_jump :
-                des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.3],[0,0.4, 0.1]]) #position juste en dessous des hanche
+            if Lateral_jump_1 :
+                des_foot_position = np.array([[0,-0.01, -0.3],[0,0.35, 0.1],[0,-0.01, -0.3],[0,0.35, 0.1]]) #position juste en dessous des hanche
+                tau -= nominal_position(simulator)
+                tau += nominal_position(simulator, des_foot_position)
+            elif Lateral_jump_2 :
+                des_foot_position = np.array([[0,-0.35, 0.1],[0,-0.01, -0.3],[0,-0.35, 0.1],[0,-0.01, -0.3]]) #position juste en dessous des hanche
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
             elif Forward_jump :
-                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.01,-0.0838, -0.2],[0.01,0.0838, -0.2]])
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]])
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
             
@@ -185,18 +191,30 @@ def apply_force_profile(
                 F_foot[2] *= 1.3
 
 
-        if Lateral_jump:            # Tombe après few try
+        if Lateral_jump_1:            # Tombe après few try
             F_foot[0] = 0
-            #if leg_id == (0 or 2):  # pattes avant
-            if leg_id == (0):  # pattes avant
+            if leg_id == (0 or 2):  # pattes avant
                 F_foot[1] *= 1.2
                 F_foot[2] *= 0.9
-            if leg_id == (2):  # pattes avant
-                F_foot[1] *= 1.0
+            #if leg_id == (2):  # pattes avant
+            #    F_foot[1] *= 1.0
+            #    F_foot[2] *= 0.9
+        
+        if Lateral_jump_2:            # Tombe après few try
+            F_foot[0] = 0
+            if leg_id == (1 or 3):  # pattes avant
+                F_foot[1] *= -1.2
                 F_foot[2] *= 0.9
 
-        if Twist_clock_jump:            
+        if Twist_clock_jump: 
+            F_foot[0] = 0  
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
+                F_foot[1] = -F_foot[1]
+  
+        
+        if Twist_cclock_jump :
+            F_foot[0] = 0  
+            if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
                 F_foot[1] = -F_foot[1]
     
 
