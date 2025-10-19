@@ -35,6 +35,14 @@ def quadruped_jump():
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
 
+    FORWARD_JUMP = 0 #works but not ideal
+    LATERAL_JUMP_LEFT = 1 #
+    LATERAL_JUMP_RIGHT = 2
+    TWIST_CLOCK_JUMP = 3 #works but not ideal
+    TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
+
+    jump_type = TWIST_COUNTER_CLOCK_JUMP
+
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
@@ -55,7 +63,7 @@ def quadruped_jump():
 
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
-        tau += apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[0]
+        tau += apply_force_profile(simulator, force_profile, jump_type)[0]
         tau += gravity_compensation(simulator)
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
@@ -64,7 +72,7 @@ def quadruped_jump():
         # to record the value of the applied force and tau for each leg in each direction
         for i in range(N_LEGS):
             for j in range(N_JOINTS):
-                foot_forces[recorded_steps, i, j] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i + j] 
+                foot_forces[recorded_steps, i, j] = apply_force_profile(simulator, force_profile, jump_type)[1][3*i + j] 
                 tau_rec[recorded_steps, i, j] = tau[3*i + j]  
 
         # Set the motor commands and step the simulation
@@ -154,9 +162,6 @@ def nominal_position(
        
         tau_i = J.T @ (kpCartesian @ (des_foot_pos[leg_id] - pos) + kdCartesian @ (-foot_vel))
         tau_i += kdJoint @ (-simulator.get_motor_velocities(leg_id))
-        """print("ptich",simulator.get_base_orientation_roll_pitch_yaw())
-        print("linear",simulator.get_base_linear_velocity())
-        print("angular",simulator.get_base_angular_velocity())"""
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
     
@@ -220,39 +225,45 @@ def apply_force_profile(
     simulator: QuadSimulator,
     force_profile: FootForceProfile,
     # OPTIONAL: add potential controller parameters here (e.g., gains)
-    foot_forces,
-    recorded_steps
+    jump_type
 ) -> np.ndarray:
     # All motor torques are in a single array
-
-    Forward_jump = False
-    Lateral_jump = False
-    Twist_clock_jump = True
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     F_foot = np.zeros(N_JOINTS*N_LEGS)
     F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
 
-
-        if Forward_jump:             # # avance un droit mais derive un peu de cote
+        if jump_type == 0:            # FORWARD_JUMP
             F_foot_i[1] = 0
             if leg_id in [0, 1]:
                 F_foot_i[0] *= 1
                 F_foot_i[2] *= 1.3
 
 
-        if Lateral_jump:            # Tombe après few try
+        if jump_type == 1:            # LATERAL JUMP LEFT
             F_foot_i[0] = 0
-            if leg_id == (0 or 2):  # pattes avant
+            if leg_id == (0 or 2):  # RIGHT LEGS
+                F_foot_i[1] *= 1
+                F_foot_i[2] *= 1.3
+
+        if jump_type == 2:            # LATERAL JUMP RIGHT
+            F_foot_i = - F_foot_i
+            F_foot_i[0] = 0
+            if leg_id == (0 or 2):  # LEFT LEGS
                 F_foot_i[1] *= 1
                 F_foot_i[2] *= 1.3
 
 
-        if Twist_clock_jump:
+        if jump_type == 3:          #TWIST CLOCKWISE JUMP
             F_foot_i[0] = 0        
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
                 F_foot_i[1] = -F_foot_i[1]
+                
+        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP
+            F_foot_i[0] = 0        
+            if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
+                F_foot_i[1] = -F_foot_i[1] #pas sur c'est ça c'est ok
 
         
 
