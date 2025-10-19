@@ -32,6 +32,7 @@ def quadruped_jump():
 
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
+    tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
 
     for step in range(n_steps):
@@ -55,16 +56,17 @@ def quadruped_jump():
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
         tau += apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[0]
-        for i in range(N_LEGS):
-            foot_forces[recorded_steps, i, 0] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i]  # que pour un pied
-            foot_forces[recorded_steps, i, 1] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i +1] 
-            foot_forces[recorded_steps, i, 2] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i +2] 
         tau += gravity_compensation(simulator)
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
-            
+        # to record the value of the applied force and tau for each leg in each direction
+        for i in range(N_LEGS):
+            for j in range(N_JOINTS):
+                foot_forces[recorded_steps, i, j] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i + j] 
+                tau_rec[recorded_steps, i, j] = tau[3*i + j]  
+
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
@@ -74,13 +76,14 @@ def quadruped_jump():
     # Close the simulation
     simulator.close()
 
-    # Trim recorded array in case the loop exited early
+    # Trim recorded arrays in case the loop exited early
     foot_forces = foot_forces[:recorded_steps]
+    tau_rec = tau_rec[:recorded_steps]
 
     # Plot force components per foot vs simulation step (one row per foot, three columns for Fx,Fy,Fz)
     steps = np.arange(recorded_steps)
     foot_names = ['FR', 'FL', 'RR', 'RL']
-    comp_labels = ['Fx', 'Fy', 'Fz']
+    comp_labels_F = ['Fx', 'Fy', 'Fz']
 
     fig, axs = plt.subplots(N_LEGS, 3, figsize=(12, 9), sharex=True)
     # If recorded_steps == 0 avoid plotting
@@ -88,9 +91,9 @@ def quadruped_jump():
         for leg_id in range(N_LEGS):
             for comp in range(3):
                 ax = axs[leg_id, comp]
-                ax.plot(steps, foot_forces[:, leg_id, comp], label=f'{foot_names[leg_id]} {comp_labels[comp]}', color=f'C{comp}')
+                ax.plot(steps, foot_forces[:, leg_id, comp], label=f'{foot_names[leg_id]} {comp_labels_F[comp]}', color=f'C{comp}')
                 if leg_id == 0:
-                    ax.set_title(comp_labels[comp])
+                    ax.set_title(comp_labels_F[comp])
                 if comp == 0:
                     ax.set_ylabel(foot_names[leg_id])
                 ax.grid(True)
@@ -101,6 +104,28 @@ def quadruped_jump():
         plt.show()
     else:
         print("No simulation data recorded - nothing to plot.")
+
+    # --- New: plot motor torque components recorded in tau_rec ---
+    # tau_rec has shape (steps, N_LEGS, 3) and stores per-leg per-joint torque values
+    comp_labels_tau = ['tau_hip', 'tau_thigh', 'tau_calf']
+    fig2, axs2 = plt.subplots(N_LEGS, 3, figsize=(12, 9), sharex=True)
+    if recorded_steps > 0:
+        for leg_id in range(N_LEGS):
+            for comp in range(3):
+                ax = axs2[leg_id, comp]
+                ax.plot(steps, tau_rec[:, leg_id, comp], label=f'{foot_names[leg_id]} {comp_labels_tau[comp]}', color=f'C{comp+3}')
+                if leg_id == 0:
+                    ax.set_title(comp_labels_tau[comp])
+                if comp == 0:
+                    ax.set_ylabel(foot_names[leg_id])
+                ax.grid(True)
+
+        axs2[-1, 1].set_xlabel('Simulation step')
+        plt.suptitle('Per-foot motor torque components over simulation steps')
+        plt.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.show()
+    else:
+        print("No torque data recorded - nothing to plot.")
 
 
 def nominal_position(
