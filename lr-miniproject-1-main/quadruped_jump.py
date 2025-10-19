@@ -1,5 +1,5 @@
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from env.simulation import QuadSimulator, SimulationOptions
 
 from profiles import FootForceProfile
@@ -7,13 +7,13 @@ from profiles import FootForceProfile
 N_LEGS = 4
 N_JOINTS = 3
 
-
+"""
 Forward_jump = True
 Lateral_jump_1 = False
 Lateral_jump_2 = False
 Twist_clock_jump = False
 Twist_cclock_jump = False
-
+"""
 def quadruped_jump():
     # Initialize simulation
     # Feel free to change these options! (except for control_mode and timestep)
@@ -27,17 +27,25 @@ def quadruped_jump():
 
     # Determine number of jumps to simulate
     n_jumps = 7  # Feel free to change this number
-    jump_duration = 5.0  # TODO: determine how long a jump takes
+    jump_duration = 3.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     # TODO: set parameters for the foot force profile here
     
     #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100)
 
-    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100)
+    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100)
+    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100)
 
+    FORWARD_JUMP = 0 #works but not ideal
+    LATERAL_JUMP_LEFT = 1 #
+    LATERAL_JUMP_RIGHT = 2
+    TWIST_CLOCK_JUMP = 3 #works but not ideal
+    TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    for _ in range(n_steps):
+    jump_type = TWIST_COUNTER_CLOCK_JUMP
+
+    for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
             break
@@ -56,26 +64,27 @@ def quadruped_jump():
 
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
-        tau += apply_force_profile(simulator, force_profile)
+        tau += apply_force_profile(simulator, force_profile, jump_type)[0]
         tau += gravity_compensation(simulator)
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground: 
             tau += virtual_model(simulator)
+        """
         else :
-            if Lateral_jump_1 :
+            if jump_type == 1 :
                 des_foot_position = np.array([[0,-0.01, -0.3],[0,0.35, 0.1],[0,-0.01, -0.3],[0,0.35, 0.1]]) #position juste en dessous des hanche
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
-            elif Lateral_jump_2 :
+            elif jump_type == 2 :
                 des_foot_position = np.array([[0,-0.35, 0.1],[0,-0.01, -0.3],[0,-0.35, 0.1],[0,-0.01, -0.3]]) #position juste en dessous des hanche
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
-            elif Forward_jump :
+            elif jump_type == 0 :
                 des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]])
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
-            
+        """
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
@@ -176,56 +185,56 @@ def apply_force_profile(
     simulator: QuadSimulator,
     force_profile: FootForceProfile,
     # OPTIONAL: add potential controller parameters here (e.g., gains)
+    jump_type
 ) -> np.ndarray:
     # All motor torques are in a single array
 
     tau = np.zeros(N_JOINTS * N_LEGS)
-    F_foot = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
+    F_foot = np.zeros(N_JOINTS*N_LEGS)
+    F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
 
 
-        if Forward_jump:             # # avance un droit mais derive un peu de cote
-            F_foot[1] = 0
+        if jump_type == 0:            # FORWARD_JUMP
+            F_foot_i[1] = 0
             if leg_id in [0, 1]:
-                F_foot[0] *= 1
-                F_foot[2] *= 1.3
+                F_foot_i[0] *= 1
+                F_foot_i[2] *= 1.3
 
 
-        if Lateral_jump_1:            # Tombe après few try
-            F_foot[0] = 0
-            if leg_id == (0 or 2):  # pattes avant
-                F_foot[1] *= 1.2
-                F_foot[2] *= 0.9
-            #if leg_id == (2):  # pattes avant
-            #    F_foot[1] *= 1.0
-            #    F_foot[2] *= 0.9
-        
-        if Lateral_jump_2:            # Tombe après few try
-            F_foot[0] = 0
-            if leg_id == (1 or 3):  # pattes avant
-                F_foot[1] *= -1.2
-                F_foot[2] *= 0.9
+        if jump_type == 1:            # LATERAL JUMP LEFT
+            F_foot_i[0] = 0
+            if leg_id == (0 or 2):  # RIGHT LEGS
+                F_foot_i[1] *= 1
+                F_foot_i[2] *= 1.3
 
-        if Twist_clock_jump: 
-            F_foot[0] = 0  
+        if jump_type == 2:            # LATERAL JUMP RIGHT
+            F_foot_i = - F_foot_i
+            F_foot_i[0] = 0
+            if leg_id == (0 or 2):  # LEFT LEGS
+                F_foot_i[1] *= 1
+                F_foot_i[2] *= 1.3
+
+
+        if jump_type == 3:          #TWIST CLOCKWISE JUMP
+            F_foot_i[0] = 0        
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
-                F_foot[1] = -F_foot[1]
-  
-        
-        if Twist_cclock_jump :
-            F_foot[0] = 0  
+                F_foot_i[1] = -F_foot_i[1]  #ne fait que changer les pied avec id 0 alors que ca devrait le faire pour 0 et 1 mais le saut fonctionne qund meme
+                
+        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP
+            F_foot_i[0] = 0        
             if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
-                F_foot[1] = -F_foot[1]
-    
+                F_foot_i[1] = -F_foot_i[1] #ne fait que changer les pied avec id 2 alors que ca devrait le faire pour 2 et 3 mais le saut fonctionne quand meme
 
         
 
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)
-        tau_i = J.T @ F_foot
+        tau_i = J.T @ F_foot_i
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
+        F_foot[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = F_foot_i
 
     return tau
 
