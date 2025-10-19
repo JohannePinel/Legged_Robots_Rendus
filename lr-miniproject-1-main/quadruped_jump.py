@@ -55,7 +55,10 @@ def quadruped_jump():
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
         tau += apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[0]
-        foot_forces[recorded_steps, :, :] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1]
+        for i in range(N_LEGS):
+            foot_forces[recorded_steps, i, 0] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i]  # que pour un pied
+            foot_forces[recorded_steps, i, 1] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i +1] 
+            foot_forces[recorded_steps, i, 2] = apply_force_profile(simulator, force_profile, foot_forces, recorded_steps)[1][3*i +2] 
         tau += gravity_compensation(simulator)
         # If touching the ground, add virtual model
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
@@ -196,38 +199,40 @@ def apply_force_profile(
     Twist_clock_jump = True
 
     tau = np.zeros(N_JOINTS * N_LEGS)
-    F_foot = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
+    F_foot = np.zeros(N_JOINTS*N_LEGS)
+    F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
 
 
         if Forward_jump:             # # avance un droit mais derive un peu de cote
-            F_foot[1] = 0
+            F_foot_i[1] = 0
             if leg_id in [0, 1]:
-                F_foot[0] *= 1
-                F_foot[2] *= 1.3
+                F_foot_i[0] *= 1
+                F_foot_i[2] *= 1.3
 
 
         if Lateral_jump:            # Tombe après few try
-            F_foot[0] = 0
+            F_foot_i[0] = 0
             if leg_id == (0 or 2):  # pattes avant
-                F_foot[1] *= 1
-                F_foot[2] *= 1.3
+                F_foot_i[1] *= 1
+                F_foot_i[2] *= 1.3
 
 
         if Twist_clock_jump:
-            F_foot[0] = 0            
+            F_foot_i[0] = 0        
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
-                F_foot[1] = -F_foot[1]
-    
+                F_foot_i[1] = -F_foot_i[1]
 
         
 
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)
-        tau_i = J.T @ F_foot
+        tau_i = J.T @ F_foot_i
         # Store in torques array
         tau[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = tau_i
+        F_foot[leg_id * N_JOINTS : leg_id * N_JOINTS + N_JOINTS] = F_foot_i
+    
     return [tau, F_foot] #ajout de F_foot en sortie pour pouvoir l'afficher dans un graph
 
 
