@@ -45,11 +45,11 @@ def quadruped_jump():
 
 
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
-    """
+    
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
-    """
+    
     
 
     for step in range(n_steps):
@@ -93,39 +93,39 @@ def quadruped_jump():
                 tau += nominal_position(simulator, des_foot_position)
         
         # to record the value of the applied force and tau for each leg in each direction
-        """
+        
         for i in range(N_LEGS):
             for j in range(N_JOINTS):
                 foot_forces[recorded_steps, i, j] = apply_force_profile(simulator, force_profile, jump_type)[1][3*i + j] 
                 tau_rec[recorded_steps, i, j] = tau[3*i + j]  
-        """
+        
 
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
-        """
+        
         recorded_steps += 1
-        """
+        
 
 
     # Close the simulation
     simulator.close()
 
     # Trim recorded arrays in case the loop exited early
-    """
+    
     foot_forces = foot_forces[:recorded_steps]
     tau_rec = tau_rec[:recorded_steps]
-    """
+    
 
     # Plot force components per foot vs simulation step
-    """
+    
     steps = np.arange(recorded_steps)
     foot_names = ['FR', 'FL', 'RR', 'RL']
     comp_labels_F = ['Fx [N]', 'Fy [N]', 'Fz [N]']
-    """
+    
 
     # Now rows = components (Fx,Fy,Fz) and columns = feet (FR,FL,RR,RL)
-    """
+    
     fig, axs = plt.subplots(len(comp_labels_F), N_LEGS, figsize=(12, 9), sharex=True)
     if recorded_steps > 0:
         for comp in range(3):
@@ -172,7 +172,7 @@ def quadruped_jump():
         plt.show()
     else:
         print("No torque data recorded - nothing to plot.")
-    """
+    
 
 def nominal_position(
     simulator: QuadSimulator,
@@ -186,10 +186,6 @@ def nominal_position(
 ) -> np.ndarray:
     # All motor torques are in a single array
     # TODO: compute nominal position torques for leg_id
-
-    #if Lateral_jump :
-     #   des_foot_pos = np.array([[0,-0.1, -0.275],[0,0.4, -0.175],[0,-0.1, -0.2],[0,0.4, -0.1]]) #position juste en dessous des hanche
-
 
 
     tau = np.zeros(N_JOINTS * N_LEGS)
