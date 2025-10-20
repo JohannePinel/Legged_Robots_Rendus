@@ -20,7 +20,7 @@ def quadruped_jump():
     simulator = QuadSimulator(sim_options)
 
     # Determine number of jumps to simulate
-    n_jumps = 7  # Feel free to change this number
+    n_jumps = 2  # Feel free to change this number
     jump_duration = 3.0  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
