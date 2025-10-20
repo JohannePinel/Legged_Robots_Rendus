@@ -66,10 +66,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = 50, high = 150)
-    Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
+    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
+    Fy = trial.suggest_float(name="Fy", low = 50, high = 150)
     Fz = trial.suggest_float(name="Fz", low = 75, high = 200)
-    
+     
     # Reset the simulation
     simulator.reset()
 
@@ -84,7 +84,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  LATERAL_JUMP_LEFT
 
     
     # TODO: set parameters for the foot force profile here
