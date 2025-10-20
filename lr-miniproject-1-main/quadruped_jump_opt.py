@@ -66,8 +66,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = 100, high = 250)
-    Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
+    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
+    Fy = trial.suggest_float(name="Fy", low = 50, high = 150)
     Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
      
     # Reset the simulation
@@ -84,7 +84,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  TWIST_CLOCK_JUMP
 
     
     # TODO: set parameters for the foot force profile here
@@ -98,8 +98,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     total_time = n_steps * sim_options.timestep #to measure fastest controller
     #max_height = -99 # to initialize tracking
     start_pos = simulator.get_base_position() #to measure fastest controller
+    _,_,yaw_start = simulator.get_base_orientation_roll_pitch_yaw() #to measure fastest controller
     yaw_previous = 0
     yaw_offset = 0
+    max_roll = 0
+    max_pitch = 0
     for _ in range(n_steps):
         # Step the oscillator
         force_profile.step(sim_options.timestep)
@@ -137,13 +140,17 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
                 des_foot_position = np.array([[0,0, -0.2],[0,0.2, -0.2],[0,-0.2, -0.2],[0,0, -0.2]])
                 tau += nominal_position(simulator, des_foot_position)
         #update the yaw with each step ans makes it possible to count turns
-        _, _, yaw = simulator.get_base_orientation_roll_pitch_yaw()
+        roll, pitch, yaw = simulator.get_base_orientation_roll_pitch_yaw()
         if (yaw - yaw_previous) >np.pi:
             yaw_offset -= 2*np.pi
         elif(yaw - yaw_previous) < -np.pi:
             yaw += 2*np.pi
         yaw_previous = yaw
         yaw_final = yaw + yaw_offset
+        if (abs(max_pitch) < abs(pitch)):
+            max_pitch = pitch
+        if(abs(max_roll) < abs(roll)):
+            max_roll = roll
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
@@ -186,26 +193,28 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # TO MEASURE FASTEST
     
     end_pos = simulator.get_base_position()
-    velocity = (end_pos - start_pos) / total_time 
+    average_velocity = (end_pos - start_pos) / total_time 
+    average_angular_velocity = (yaw_final - yaw_start)/total_time
     if jump_type == FORWARD_JUMP:
         # Further along X
-        objective_value = velocity[0]
+        objective_value = average_velocity[0]
 
     elif jump_type == LATERAL_JUMP_LEFT:
         # Positive Y direction
-        objective_value = velocity[1]
+        objective_value = average_velocity[1]
 
     elif jump_type == LATERAL_JUMP_RIGHT:
         # Negative Y direction (absolute)
-        objective_value = velocity[1]  # or abs(position[1])
+        objective_value = -average_velocity[1]  # or abs(position[1])
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
-        objective_value = -yaw_final #proble yax est en -pi et +pi et prends en compte que la position finale
-
+        objective_value = -average_angular_velocity 
+        if (abs(max_pitch) or abs(max_roll)) > np.pi*0.05: #to avoid to much wooble or failing but fast 
+            objective_value =-5
     elif jump_type == TWIST_COUNTER_CLOCK_JUMP:
         # Max counterclockwise twist → POSITIVE yaw
-        objective_value = yaw_final
+        objective_value = average_angular_velocity
     return objective_value
     
 
