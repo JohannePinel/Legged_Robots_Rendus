@@ -27,12 +27,12 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  LATERAL_JUMP_RIGHT
+    jump_type =  FORWARD_JUMP
 
     if jump_type == 0 :
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 3.925879806965068, f1=0.9983689107917987, Fx=74.7063379541098, Fy=0.9241456886204249, Fz=99.75458667119952)
+        force_profile = FootForceProfile(f0 = 1.5802996241239413, f1= 2.1247143086272664, Fx=112.47922456158778, Fy=-1.0524536076375688, Fz=155.73205508790514)
         #Force profile farthest
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1= 0.9983689107917987, Fx = 101.87535655954954, Fy = 58.426286023928334, Fz = 99.75458667119952)
     elif jump_type == 1 :
@@ -275,12 +275,14 @@ def apply_force_profile(
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     F_foot = np.zeros(N_JOINTS*N_LEGS)
-    F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
+    
     for leg_id in range(N_LEGS):
-        
+        F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
         if jump_type == 0:            # FORWARD_JUMP
             if leg_id in [0, 1]:
+                #print(F_foot_i[2],"forward", leg_id)
                 F_foot_i[2] *= 1.3
+                #print(F_foot_i[2],"forward", leg_id)
         
         if jump_type == 1:            # LATERAL JUMP LEFT
             if leg_id == (2):  # pattes arrière
