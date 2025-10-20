@@ -115,17 +115,17 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         if on_ground:
             tau += virtual_model(simulator)
         else :
-            if jump_type == 2 :
+            if jump_type == 0 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 1 :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]])
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 0 :
+            elif jump_type == 2 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
+                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
                 tau += nominal_position(simulator, des_foot_position)
 
         # Set the motor commands and step the simulation

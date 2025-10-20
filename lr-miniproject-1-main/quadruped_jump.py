@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  LATERAL_JUMP_RIGHT
+    jump_type =  LATERAL_JUMP_LEFT
 
     if jump_type == 0 :
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
@@ -89,18 +89,20 @@ def quadruped_jump():
         if on_ground:
             tau += virtual_model(simulator)
         else :
-            if jump_type == 2 :
+            if jump_type == 0 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 1 :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]])
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 0 :
+            elif jump_type == 2 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
+                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
                 tau += nominal_position(simulator, des_foot_position)
+            
+
         
         # to record the value of the applied force and tau for each leg in each direction
         
