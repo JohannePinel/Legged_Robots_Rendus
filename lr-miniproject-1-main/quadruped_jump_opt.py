@@ -40,7 +40,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=25)
+    study.optimize(objective, n_trials=15)
 
     # Close the simulation
     simulator.close()
@@ -66,8 +66,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 0.0, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.0, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = -2, high = 200)
-    Fy = trial.suggest_float(name="Fy", low = -2, high = 100)
+    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
+    Fy = trial.suggest_float(name="Fy", low = -150, high = -50)
     Fz = trial.suggest_float(name="Fz", low = 90, high = 300)
 
     # Reset the simulation
@@ -89,7 +89,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  LATERAL_JUMP_RIGHT
 
     
     # TODO: set parameters for the foot force profile here
