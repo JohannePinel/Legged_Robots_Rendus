@@ -67,7 +67,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
     Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
-    Fy = trial.suggest_float(name="Fy", low = 50, high = 150)
+    Fy = trial.suggest_float(name="Fy", low = -150, high = -50)
     Fz = trial.suggest_float(name="Fz", low = 75, high = 200)
      
     # Reset the simulation
@@ -84,7 +84,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  LATERAL_JUMP_LEFT
+    jump_type =  LATERAL_JUMP_RIGHT
 
     
     # TODO: set parameters for the foot force profile here
@@ -156,7 +156,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     elif jump_type == LATERAL_JUMP_RIGHT:
         # Negative Y direction (absolute)
-        objective_value = -position[1]  # or abs(position[1])
+        objective_value = -position[1]/n_jumps  # or abs(position[1])
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
