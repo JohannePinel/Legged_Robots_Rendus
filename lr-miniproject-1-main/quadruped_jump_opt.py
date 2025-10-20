@@ -84,7 +84,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_CLOCK_JUMP
+    jump_type =  TWIST_COUNTER_CLOCK_JUMP
 
     
     # TODO: set parameters for the foot force profile here
