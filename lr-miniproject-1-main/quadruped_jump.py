@@ -27,39 +27,27 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_CLOCK_JUMP
+    jump_type =  FORWARD_JUMP
 
-    if jump_type == 0 :
+    if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
         #Force profile furthest
-        #force_profile = FootForceProfile(f0 = 1.5802996241239413, f1= 2.1247143086272664, Fx=112.47922456158778, Fy=-1.0524536076375688, Fz=155.73205508790514)
+        force_profile = FootForceProfile(f0 = 1.5802996241239413, f1= 2.1247143086272664, Fx=112.47922456158778, Fy=-1.0524536076375688, Fz=155.73205508790514)
         #Force profile fastest
-        force_profile = FootForceProfile(f0= 4.343212604071553, f1= 2.9876247366014907, Fx = 216.50145070971192, Fy = -2.9792207053684034, Fz = 148.08179648496443)
-    elif jump_type == 1 :
+        #force_profile = FootForceProfile(f0= 4.343212604071553, f1= 2.9876247366014907, Fx = 216.50145070971192, Fy = -2.9792207053684034, Fz = 148.08179648496443)
+    elif jump_type == LATERAL_JUMP_LEFT :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 1.0491720568015048, f1=2.728296095500716, Fx=-4.656114788847816, Fy=140.9320402078782, Fz=107.34749770000212)
-        #Force profile fastest
-        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
-    elif jump_type == 2 :
-        #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
-        #Force profile furthest
-        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=-106.80549813578843, Fz=111.40364252475524)
-        #Force profile fastest
-        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
-    elif jump_type == 3 :
+        force_profile = FootForceProfile(f0 = 1.1349399126908997, f1=1.1349399126908997, Fx=-1.2804965668737214, Fy=145.09589885473707, Fz=162.48419817145134)
+    elif jump_type == LATERAL_JUMP_RIGHT :
+        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
+    elif jump_type == TWIST_CLOCK_JUMP:
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
         #Force profile furthest
-        #force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=57.395876398158684, Fz=93.68437102970628)
-        #Force profile fastest
-        force_profile = FootForceProfile(f0 = 2.2872578337065295, f1=0.7382168315800994, Fx=3.645440342049156, Fy=144.83752696457887, Fz=110.84393764192517)
-    elif jump_type == 4 :
-        #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
-        #Force profile furthest
-        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx= 0.24756431632237863, Fy=57.395876398158684, Fz=93.68437102970628)
-        #Force profile fastest
-        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
-
+        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=57.395876398158684, Fz=93.68437102970628)
+    elif jump_type == TWIST_COUNTER_CLOCK_JUMP :
+        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
+    
     # Determine number of jumps to simulate
     n_jumps = 6  # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
