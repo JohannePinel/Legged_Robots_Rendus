@@ -40,7 +40,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=15)
+    study.optimize(objective, n_trials=50)
 
     # Close the simulation
     simulator.close()
@@ -66,9 +66,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
-    Fy = trial.suggest_float(name="Fy", low = 25, high = 100)
-    Fz = trial.suggest_float(name="Fz", low = 50, high = 200)
+    Fx = trial.suggest_float(name="Fx", low = 100, high = 250)
+    Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
+    Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
      
     # Reset the simulation
     simulator.reset()
@@ -84,7 +84,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_COUNTER_CLOCK_JUMP
+    jump_type =  FORWARD_JUMP
 
     
     # TODO: set parameters for the foot force profile here
@@ -97,7 +97,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     total_time = n_steps * sim_options.timestep #to measure fastest controller
     #max_height = -99 # to initialize tracking
-    start_pos = simulator.get_base_position()[0] #to measure fastest controller
+    start_pos = simulator.get_base_position() #to measure fastest controller
     yaw_previous = 0
     yaw_offset = 0
     for _ in range(n_steps):
@@ -158,9 +158,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #min_roll_pitch = min(orientation_base)
 
     #TO MEASURE FURTHEST
-    
+    """
     position = simulator.get_base_position()
-    
     
     if jump_type == FORWARD_JUMP:
         # Further along X
@@ -186,10 +185,29 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     """
     # TO MEASURE FASTEST
     
-    end_pos = simulator.get_base_position()[0]
+    end_pos = simulator.get_base_position()
     velocity = (end_pos - start_pos) / total_time 
-    return velocity
-    """
+    if jump_type == FORWARD_JUMP:
+        # Further along X
+        objective_value = velocity[0]
+
+    elif jump_type == LATERAL_JUMP_LEFT:
+        # Positive Y direction
+        objective_value = velocity[1]
+
+    elif jump_type == LATERAL_JUMP_RIGHT:
+        # Negative Y direction (absolute)
+        objective_value = velocity[1]  # or abs(position[1])
+
+    elif jump_type == TWIST_CLOCK_JUMP:
+        # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
+        objective_value = -yaw_final #proble yax est en -pi et +pi et prends en compte que la position finale
+
+    elif jump_type == TWIST_COUNTER_CLOCK_JUMP:
+        # Max counterclockwise twist → POSITIVE yaw
+        objective_value = yaw_final
+    return objective_value
+    
 
 
 if __name__ == "__main__":
