@@ -36,8 +36,9 @@ def quadruped_jump():
     #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=30, Fz=100) #force profile lateral jump mais pas stable du tout
     
     #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
-    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
-    force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+    #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+    #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=-100, Fz=100) # pour lateral jump RIGHT
 
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     """
@@ -51,7 +52,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type = LATERAL_JUMP_LEFT
+    jump_type = FORWARD_JUMP
 
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
@@ -82,7 +83,8 @@ def quadruped_jump():
         
         else :
             if jump_type == 2 :
-                des_foot_position = np.array([[0,-0.01, -0.3],[0,0.35, 0.1],[0,-0.01, -0.3],[0,0.35, 0.1]]) #position juste en dessous des hanche
+                #des_foot_position = np.array([[0,-0.01, -0.3],[0,0.35, 0.1],[0,-0.01, -0.3],[0,0.35, 0.1]]) #position juste en dessous des hanche
+                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
                 tau -= nominal_position(simulator)
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 1 :
@@ -291,18 +293,26 @@ def apply_force_profile(
                 F_foot_i[2] *= 1.3
             """
             if leg_id == (0):  # pattes avant
-                F_foot[1] *= 1
-                F_foot[2] *= 1
+                F_foot_i[1] *= 1
+                F_foot_i[2] *= 1
             if leg_id == (2):  # pattes arrière
-                F_foot[1] *= 0.95
-                F_foot[2] *= 1
+                F_foot_i[1] *= 0.95
+                F_foot_i[2] *= 1
 
         if jump_type == 2:            # LATERAL JUMP RIGHT
-            F_foot_i = - F_foot_i
+           # F_foot_i[1] *= -1 
             F_foot_i[0] = 0
+            """
             if leg_id == (0 or 2):  # LEFT LEGS
                 F_foot_i[1] *= 1
                 F_foot_i[2] *= 1.3
+            """
+            if leg_id == (1):  # pattes avant
+                F_foot_i[1] *= 1
+                F_foot_i[2] *= 1
+            if leg_id == (3):  # pattes arrière
+                F_foot_i[1] *= 0.95
+                F_foot_i[2] *= 1
 
 
         if jump_type == 3:          #TWIST CLOCKWISE JUMP
