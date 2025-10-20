@@ -279,40 +279,24 @@ def apply_force_profile(
     F_foot = np.zeros(N_JOINTS*N_LEGS)
     F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
-
+        
         if jump_type == 0:            # FORWARD_JUMP
-            F_foot_i[1] = 0
             if leg_id in [0, 1]:
-                F_foot_i[0] *= 1
                 F_foot_i[2] *= 1.3
-
-
+        
         if jump_type == 1:            # LATERAL JUMP LEFT
-            F_foot_i[0] = 0
-            if leg_id == (0):  # pattes avant
-                F_foot_i[1] *= 1
-                F_foot_i[2] *= 1
             if leg_id == (2):  # pattes arrière
-                F_foot_i[1] *= 0.95
-                F_foot_i[2] *= 1
+                F_foot_i[1] *= 0.95 #to try and compensate the drift
 
         if jump_type == 2:            # LATERAL JUMP RIGHT
-            F_foot_i[0] = 0
-            if leg_id == (1):  # pattes avant
-                F_foot_i[1] *= 1
-                F_foot_i[2] *= 1
             if leg_id == (3):  # pattes arrière
-                F_foot_i[1] *= 0.95
-                F_foot_i[2] *= 1
+                F_foot_i[1] *= 0.95 #to try and compensate the drift
 
-
-        if jump_type == 3:          #TWIST CLOCKWISE JUMP
-            F_foot_i[0] = 0        
+        if jump_type == 3:          #TWIST CLOCKWISE JUMP       
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
                 F_foot_i[1] = -F_foot_i[1]  #ne fait que changer les pied avec id 0 alors que ca devrait le faire pour 0 et 1 mais le saut fonctionne qund meme
                 
-        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP
-            F_foot_i[0] = 0        
+        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP       
             if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
                 F_foot_i[1] = -F_foot_i[1] #ne fait que changer les pied avec id 2 alors que ca devrait le faire pour 2 et 3 mais le saut fonctionne quand meme
 
