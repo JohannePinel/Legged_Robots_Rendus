@@ -40,7 +40,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=6)
+    study.optimize(objective, n_trials=25)
 
     # Close the simulation
     simulator.close()
@@ -140,7 +140,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #min_roll_pitch = min(orientation_base)
 
     #TO MEASURE FURTHEST
-    """
+    
     position = simulator.get_base_position()
     roll, pitch, yaw = simulator.get_base_orientation_roll_pitch_yaw()
 
@@ -171,7 +171,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     end_pos = simulator.get_base_position()[0]
     velocity = (end_pos - start_pos) / total_time 
     return velocity
-    
+    """
 
 
 if __name__ == "__main__":

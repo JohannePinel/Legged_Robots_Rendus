@@ -32,10 +32,14 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_COUNTER_CLOCK_JUMP
+    jump_type =  FORWARD_JUMP
 
     if jump_type == 0 :
-        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+        #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+        #Force profile furthest
+        force_profile = FootForceProfile(f0 = 3.925879806965068, f1=0.9983689107917987, Fx=101.87535655954954, Fy=58.426286023928334, Fz=99.75458667119952)
+        #Force profile farthest
+        #force_profile = FootForceProfile(f0= 3.925879806965068, f1= 0.9983689107917987, Fx = 101.87535655954954, Fy = 58.426286023928334, Fz = 99.75458667119952)
     elif jump_type == 1 :
         force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
     elif jump_type == 2 :
