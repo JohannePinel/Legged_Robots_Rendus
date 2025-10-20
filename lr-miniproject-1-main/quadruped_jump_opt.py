@@ -76,12 +76,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # Extract simulation options
     sim_options = simulator.options
 
-    # Determine number of jumps to simulate
-    n_jumps = 2  # Feel free to change this number
-    jump_duration = 3.0  # TODO: determine how long a jump takes
-    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
-
-    total_time = n_steps * sim_options.timestep #to measure fastest controller
+    
 
     FORWARD_JUMP = 0 #works but not ideal
     LATERAL_JUMP_LEFT = 1 #
@@ -94,6 +89,13 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     
     # TODO: set parameters for the foot force profile here
     force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=Fy, Fz=Fz)
+
+    # Determine number of jumps to simulate
+    n_jumps = 6  # Feel free to change this number
+    jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
+    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
+
+    total_time = n_steps * sim_options.timestep #to measure fastest controller
     #max_height = -99 # to initialize tracking
     start_pos = simulator.get_base_position()[0] #to measure fastest controller
 
