@@ -18,12 +18,7 @@ def quadruped_jump():
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
-
-    # Determine number of jumps to simulate
-    n_jumps = 2  # Feel free to change this number
-    jump_duration = 3.0  # TODO: determine how long a jump takes
-    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
-
+    
     # TODO: set parameters for the foot force profile here
     
     FORWARD_JUMP = 0 #works but not ideal
@@ -32,18 +27,33 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_COUNTER_CLOCK_JUMP
+    jump_type =  LATERAL_JUMP_LEFT
 
     if jump_type == 0 :
-        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+        #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+        #Force profile furthest
+        force_profile = FootForceProfile(f0 = 1.5802996241239413, f1= 2.1247143086272664, Fx=112.47922456158778, Fy=-1.0524536076375688, Fz=155.73205508790514)
+        #Force profile fastest
+        #force_profile = FootForceProfile(f0= 3.925879806965068, f1= 0.9983689107917987, Fx = 101.87535655954954, Fy = 58.426286023928334, Fz = 99.75458667119952)
     elif jump_type == 1 :
-        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+        #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+        #Force profile furthest
+        force_profile = FootForceProfile(f0 = 1.0491720568015048, f1=2.728296095500716, Fx=-4.656114788847816, Fy=140.9320402078782, Fz=107.34749770000212)
+        #Force profile fastest
+        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
     elif jump_type == 2 :
-        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=-100, Fz=100) # pour lateral jump RIGHT
+        #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
+        #Force profile furthest
+        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=-106.80549813578843, Fz=111.40364252475524)
+        #Force profile fastest
+        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
     else :
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
 
-
+    # Determine number of jumps to simulate
+    n_jumps = 6  # Feel free to change this number
+    jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
+    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
@@ -79,18 +89,20 @@ def quadruped_jump():
         if on_ground:
             tau += virtual_model(simulator)
         else :
-            if jump_type == 2 :
+            if jump_type == 0 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 1 :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]])
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 0 :
+            elif jump_type == 2 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
+                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
                 tau += nominal_position(simulator, des_foot_position)
+            
+
         
         # to record the value of the applied force and tau for each leg in each direction
         
@@ -265,47 +277,30 @@ def apply_force_profile(
 
     tau = np.zeros(N_JOINTS * N_LEGS)
     F_foot = np.zeros(N_JOINTS*N_LEGS)
-    F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
+    
     for leg_id in range(N_LEGS):
-
+        F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
         if jump_type == 0:            # FORWARD_JUMP
-            F_foot_i[1] = 0
             if leg_id in [0, 1]:
-                F_foot_i[0] *= 1
+                #print(F_foot_i[2],"forward", leg_id)
                 F_foot_i[2] *= 1.3
-
-
+                #print(F_foot_i[2],"forward", leg_id)
+        
         if jump_type == 1:            # LATERAL JUMP LEFT
-            F_foot_i[0] = 0
-            if leg_id == (0):  # pattes avant
-                F_foot_i[1] *= 1
-                F_foot_i[2] *= 1
             if leg_id == (2):  # pattes arrière
-                F_foot_i[1] *= 0.95
-                F_foot_i[2] *= 1
+                F_foot_i[1] *= 0.95 #to try and compensate the drift
 
         if jump_type == 2:            # LATERAL JUMP RIGHT
-            F_foot_i[0] = 0
-            if leg_id == (1):  # pattes avant
-                F_foot_i[1] *= 1
-                F_foot_i[2] *= 1
             if leg_id == (3):  # pattes arrière
-                F_foot_i[1] *= 0.95
-                F_foot_i[2] *= 1
+                F_foot_i[1] *= 0.95 #to try and compensate the drift
 
-
-        if jump_type == 3:          #TWIST CLOCKWISE JUMP
-            F_foot_i[0] = 0        
+        if jump_type == 3:          #TWIST CLOCKWISE JUMP       
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
-                F_foot_i[1] = -F_foot_i[1]
+                F_foot_i[1] = -F_foot_i[1]  #ne fait que changer les pied avec id 0 alors que ca devrait le faire pour 0 et 1 mais le saut fonctionne qund meme
                 
-        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP
-            F_foot_i[0] = 0        
+        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP       
             if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
-                F_foot_i[1] = -F_foot_i[1] #pas sur c'est ça c'est ok
-
-        
-
+                F_foot_i[1] = -F_foot_i[1] #ne fait que changer les pied avec id 2 alors que ca devrait le faire pour 2 et 3 mais le saut fonctionne quand meme
 
         # TODO: compute force profile torques for leg_id
         J,_ = simulator.get_jacobian_and_position(leg_id)

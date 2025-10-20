@@ -40,7 +40,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=6)
+    study.optimize(objective, n_trials=15)
 
     # Close the simulation
     simulator.close()
@@ -64,24 +64,19 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 0.0, high = 5)
-    f1 = trial.suggest_float(name="f1", low = 0.0, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = -2, high = 200)
-    Fy = trial.suggest_float(name="Fy", low = -2, high = 100)
-    Fz = trial.suggest_float(name="Fz", low = 90, high = 300)
-
+    f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
+    f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
+    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
+    Fy = trial.suggest_float(name="Fy", low = -150, high = -50)
+    Fz = trial.suggest_float(name="Fz", low = 75, high = 200)
+     
     # Reset the simulation
     simulator.reset()
 
     # Extract simulation options
     sim_options = simulator.options
 
-    # Determine number of jumps to simulate
-    n_jumps = 2  # Feel free to change this number
-    jump_duration = 3.0  # TODO: determine how long a jump takes
-    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
-
-    total_time = n_steps * sim_options.timestep #to measure fastest controller
+    
 
     FORWARD_JUMP = 0 #works but not ideal
     LATERAL_JUMP_LEFT = 1 #
@@ -89,11 +84,18 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  LATERAL_JUMP_RIGHT
 
     
     # TODO: set parameters for the foot force profile here
     force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=Fy, Fz=Fz)
+
+    # Determine number of jumps to simulate
+    n_jumps = 6  # Feel free to change this number
+    jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
+    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
+
+    total_time = n_steps * sim_options.timestep #to measure fastest controller
     #max_height = -99 # to initialize tracking
     start_pos = simulator.get_base_position()[0] #to measure fastest controller
 
@@ -113,17 +115,17 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         if on_ground:
             tau += virtual_model(simulator)
         else :
-            if jump_type == 2 :
+            if jump_type == 0 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 1 :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]])
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 0 :
+            elif jump_type == 2 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
+                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
                 tau += nominal_position(simulator, des_foot_position)
 
         # Set the motor commands and step the simulation
@@ -140,7 +142,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #min_roll_pitch = min(orientation_base)
 
     #TO MEASURE FURTHEST
-    """
+    
     position = simulator.get_base_position()
     roll, pitch, yaw = simulator.get_base_orientation_roll_pitch_yaw()
 
@@ -154,7 +156,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     elif jump_type == LATERAL_JUMP_RIGHT:
         # Negative Y direction (absolute)
-        objective_value = -position[1]  # or abs(position[1])
+        objective_value = -position[1]/n_jumps  # or abs(position[1])
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
@@ -171,7 +173,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     end_pos = simulator.get_base_position()[0]
     velocity = (end_pos - start_pos) / total_time 
     return velocity
-    
+    """
 
 
 if __name__ == "__main__":
