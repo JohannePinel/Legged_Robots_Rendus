@@ -66,8 +66,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 0.0, high = 5)
     f1 = trial.suggest_float(name="f1", low = 0.0, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = -2, high = 2)
-    Fy = trial.suggest_float(name="Fy", low = -2, high = 2)
+    Fx = trial.suggest_float(name="Fx", low = -2, high = 200)
+    Fy = trial.suggest_float(name="Fy", low = -2, high = 100)
     Fz = trial.suggest_float(name="Fz", low = 90, high = 300)
 
     # Reset the simulation
@@ -83,7 +83,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     # TODO: set parameters for the foot force profile here
     force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=Fy, Fz=Fz)
-    max_height = -99 # to initialize tracking
+    #max_height = -99 # to initialize tracking
 
     for _ in range(n_steps):
         # Step the oscillator
@@ -107,10 +107,17 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     # TODO: implement an objective function and return its value
     # Note: the objective function is maximized!
-    base_pos = simulator.get_base_position()
-    max_height = max(base_pos[2], max_height)
+    
+    #base_pos = simulator.get_base_position()
+    #max_height = max(base_pos[2], max_height)
 
-    return max_height
+    #orientation_base = simulator.get_base_orientation_roll_pitch_yaw()
+    #min_roll_pitch = min(orientation_base)
+    further = -99
+    position = simulator.get_base_position()
+    geradeaus = max(position[0],further)
+
+    return geradeaus
 
 
 if __name__ == "__main__":

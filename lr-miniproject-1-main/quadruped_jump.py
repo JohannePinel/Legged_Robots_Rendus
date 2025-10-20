@@ -26,23 +26,31 @@ def quadruped_jump():
 
     # TODO: set parameters for the foot force profile here
     
-    #force_profile = FootForceProfile(f0= 2, f1=0.7, Fx=100, Fy=0, Fz=70) #force_profile for a foraward jumpe taht is stable but turns a little bit
-    #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=30, Fz=100) #force profile lateral jump mais pas stable du tout
-    force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
-    """"peut on mettre force profile avant jump duration ?? Car si oui, on peut utiliser impuls duration et idle duration 
-    pour calculer le temps d'un saut"""
-    # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
-    foot_forces = np.zeros((n_steps, N_LEGS, 3))
-    tau_rec = np.zeros((n_steps, N_LEGS, 3))
-    recorded_steps = 0
-
     FORWARD_JUMP = 0 #works but not ideal
     LATERAL_JUMP_LEFT = 1 #
     LATERAL_JUMP_RIGHT = 2
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type = TWIST_COUNTER_CLOCK_JUMP
+    jump_type =  TWIST_COUNTER_CLOCK_JUMP
+
+    if jump_type == 0 :
+        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+    elif jump_type == 1 :
+        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+    elif jump_type == 2 :
+        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=-100, Fz=100) # pour lateral jump RIGHT
+    else :
+        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
+
+
+    # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
+    
+    foot_forces = np.zeros((n_steps, N_LEGS, 3))
+    tau_rec = np.zeros((n_steps, N_LEGS, 3))
+    recorded_steps = 0
+    
+    
 
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
@@ -70,31 +78,54 @@ def quadruped_jump():
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
+        else :
+            if jump_type == 2 :
+                tau -= nominal_position(simulator)
+                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
+                tau += nominal_position(simulator, des_foot_position)
+            elif jump_type == 1 :
+                tau -= nominal_position(simulator)
+                des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]])
+                tau += nominal_position(simulator, des_foot_position)
+            elif jump_type == 0 :
+                tau -= nominal_position(simulator)
+                des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
+                tau += nominal_position(simulator, des_foot_position)
+        
         # to record the value of the applied force and tau for each leg in each direction
+        
         for i in range(N_LEGS):
             for j in range(N_JOINTS):
                 foot_forces[recorded_steps, i, j] = apply_force_profile(simulator, force_profile, jump_type)[1][3*i + j] 
                 tau_rec[recorded_steps, i, j] = tau[3*i + j]  
+        
 
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
+        
         recorded_steps += 1
+        
 
 
     # Close the simulation
     simulator.close()
 
     # Trim recorded arrays in case the loop exited early
+    
     foot_forces = foot_forces[:recorded_steps]
     tau_rec = tau_rec[:recorded_steps]
+    
 
     # Plot force components per foot vs simulation step
+    
     steps = np.arange(recorded_steps)
     foot_names = ['FR', 'FL', 'RR', 'RL']
     comp_labels_F = ['Fx [N]', 'Fy [N]', 'Fz [N]']
+    
 
     # Now rows = components (Fx,Fy,Fz) and columns = feet (FR,FL,RR,RL)
+    
     fig, axs = plt.subplots(len(comp_labels_F), N_LEGS, figsize=(12, 9), sharex=True)
     if recorded_steps > 0:
         for comp in range(3):
@@ -141,14 +172,16 @@ def quadruped_jump():
         plt.show()
     else:
         print("No torque data recorded - nothing to plot.")
-
+    
 
 def nominal_position(
     simulator: QuadSimulator,
+    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]), #position juste en dessous des hanche
     kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
-    kdJoint = np.diag([0.1,0.1,0.1]),# valeur arbitraire
-    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]) #position juste en dessous des hanche
+    kdJoint = np.diag([0.1,0.1,0.1])# valeur arbitraire
+    
+        
     # OPTIONAL: add potential controller parameters here (e.g., gains)
 ) -> np.ndarray:
     # All motor torques are in a single array
@@ -244,16 +277,21 @@ def apply_force_profile(
 
         if jump_type == 1:            # LATERAL JUMP LEFT
             F_foot_i[0] = 0
-            if leg_id == (0 or 2):  # RIGHT LEGS
+            if leg_id == (0):  # pattes avant
                 F_foot_i[1] *= 1
-                F_foot_i[2] *= 1.3
+                F_foot_i[2] *= 1
+            if leg_id == (2):  # pattes arrière
+                F_foot_i[1] *= 0.95
+                F_foot_i[2] *= 1
 
         if jump_type == 2:            # LATERAL JUMP RIGHT
-            F_foot_i = - F_foot_i
             F_foot_i[0] = 0
-            if leg_id == (0 or 2):  # LEFT LEGS
+            if leg_id == (1):  # pattes avant
                 F_foot_i[1] *= 1
-                F_foot_i[2] *= 1.3
+                F_foot_i[2] *= 1
+            if leg_id == (3):  # pattes arrière
+                F_foot_i[1] *= 0.95
+                F_foot_i[2] *= 1
 
 
         if jump_type == 3:          #TWIST CLOCKWISE JUMP
