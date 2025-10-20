@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  TWIST_COUNTER_CLOCK_JUMP
 
     if jump_type == 0 :
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
@@ -47,8 +47,18 @@ def quadruped_jump():
         force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=-106.80549813578843, Fz=111.40364252475524)
         #Force profile fastest
         #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
-    else :
-        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
+    elif jump_type == 3 :
+        #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
+        #Force profile furthest
+        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=57.395876398158684, Fz=93.68437102970628)
+        #Force profile fastest
+        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
+    elif jump_type == 4 :
+        #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
+        #Force profile furthest
+        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx= 0.24756431632237863, Fy=57.395876398158684, Fz=93.68437102970628)
+        #Force profile fastest
+        #force_profile = FootForceProfile(f0 = , f1=, Fx=, Fy=, Fz=)
 
     # Determine number of jumps to simulate
     n_jumps = 6  # Feel free to change this number
@@ -60,7 +70,8 @@ def quadruped_jump():
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
     
-    
+    yaw_previous = 0
+    yaw_offset = 0
 
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
@@ -79,7 +90,6 @@ def quadruped_jump():
         # - The resulting torque array is therefore structured as follows:
         # [FR_hip, FR_thigh, FR_calf, FL_hip, FL_thigh, FL_calf, RR_hip, RR_thigh, RR_calf, RL_hip, RL_thigh, RL_calf]
         tau = np.zeros(N_JOINTS * N_LEGS)
-
         # TODO: implement the functions below, and add potential controller parameters as function parameters here
         tau += nominal_position(simulator)
         tau += apply_force_profile(simulator, force_profile, jump_type)[0]
@@ -101,9 +111,15 @@ def quadruped_jump():
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
                 tau += nominal_position(simulator, des_foot_position)
+            elif jump_type == 3 :
+                tau -= nominal_position(simulator)
+                des_foot_position = np.array([[0,-0.2, -0.2],[0,0, -0.2],[0,0, -0.2],[0,0.2, -0.2]]) #sifht d'environ -0.1 pour les jambes avant et + 0.1 pou les jambes arriere
+                tau += nominal_position(simulator, des_foot_position)
+            elif jump_type == 4 :
+                tau -= nominal_position(simulator)
+                des_foot_position = np.array([[0,0, -0.2],[0,0.2, -0.2],[0,-0.2, -0.2],[0,0, -0.2]])
+                tau += nominal_position(simulator, des_foot_position)
             
-
-        
         # to record the value of the applied force and tau for each leg in each direction
         
         for i in range(N_LEGS):
