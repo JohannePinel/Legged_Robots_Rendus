@@ -32,14 +32,14 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  TWIST_CLOCK_JUMP
 
     if jump_type == 0 :
-        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
+        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
     elif jump_type == 1 :
-        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=100, Fz=100) # pour lateral jump left
     elif jump_type == 2 :
-        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=-100, Fz=100) # pour lateral jump RIGHT
+        force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
     else :
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
 
@@ -267,40 +267,24 @@ def apply_force_profile(
     F_foot = np.zeros(N_JOINTS*N_LEGS)
     F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
     for leg_id in range(N_LEGS):
-
+        
         if jump_type == 0:            # FORWARD_JUMP
-            F_foot_i[1] = 0
             if leg_id in [0, 1]:
-                F_foot_i[0] *= 1
                 F_foot_i[2] *= 1.3
-
-
+        
         if jump_type == 1:            # LATERAL JUMP LEFT
-            F_foot_i[0] = 0
-            if leg_id == (0):  # pattes avant
-                F_foot_i[1] *= 1
-                F_foot_i[2] *= 1
             if leg_id == (2):  # pattes arrière
-                F_foot_i[1] *= 0.95
-                F_foot_i[2] *= 1
+                F_foot_i[1] *= 0.95 #to try and compensate the drift
 
         if jump_type == 2:            # LATERAL JUMP RIGHT
-            F_foot_i[0] = 0
-            if leg_id == (1):  # pattes avant
-                F_foot_i[1] *= 1
-                F_foot_i[2] *= 1
             if leg_id == (3):  # pattes arrière
-                F_foot_i[1] *= 0.95
-                F_foot_i[2] *= 1
+                F_foot_i[1] *= 0.95 #to try and compensate the drift
 
-
-        if jump_type == 3:          #TWIST CLOCKWISE JUMP
-            F_foot_i[0] = 0        
+        if jump_type == 3:          #TWIST CLOCKWISE JUMP       
             if leg_id in [0, 1]:           #Jambe 0, -Fx et -Fy
                 F_foot_i[1] = -F_foot_i[1]
                 
-        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP
-            F_foot_i[0] = 0        
+        if jump_type == 4:          #TWIST COUNTERCLOCKWISE JUMP       
             if leg_id in [2, 3]:           #Jambe 0, -Fx et -Fy
                 F_foot_i[1] = -F_foot_i[1] #pas sur c'est ça c'est ok
 
