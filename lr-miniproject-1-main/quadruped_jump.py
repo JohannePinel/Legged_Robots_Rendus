@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_COUNTER_CLOCK_JUMP
+    jump_type = FORWARD_JUMP
 
     if jump_type == 0 :
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=100, Fy=45, Fz=100) #force profile for a forward jump
@@ -73,6 +73,13 @@ def quadruped_jump():
     yaw_previous = 0
     yaw_offset = 0
 
+    # --- nouveau: stockage de la hauteur du centre de masse et détection de sauts ---
+    com_z_history = []           # hauteur du CoM à chaque pas (append)
+    jump_max_heights = []        # hauteur maximale mesurée pendant chaque vol (par saut)
+    in_flight = False
+    current_max_z = -np.inf
+    prev_on_ground = any(simulator.get_foot_contacts())
+
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
@@ -98,6 +105,7 @@ def quadruped_jump():
         on_ground = any(simulator.get_foot_contacts())  # true que quand les 4 pieds touhent le sol# TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
+            #tau *= 1 #pour tester sans VMC
         else :
             if jump_type == 0 :
                 tau -= nominal_position(simulator)
@@ -132,6 +140,44 @@ def quadruped_jump():
         simulator.set_motor_targets(tau)
         simulator.step()
         
+        # --- nouveau: enregistrer la hauteur du centre de masse après la step ---
+        # lecture robuste de la position de base (selon l'API disponible)
+        z = np.nan
+        if hasattr(simulator, "get_base_position"):
+            try:
+                z = simulator.get_base_position()[2]
+            except Exception:
+                z = np.nan
+        elif hasattr(simulator, "get_base_pos"):
+            try:
+                z = simulator.get_base_pos()[2]
+            except Exception:
+                z = np.nan
+        else:
+            # fallback générique si l'API est différente
+            try:
+                base = simulator.get_base_state()  # certain simulateurs ont ceci
+                z = base[2]
+            except Exception:
+                z = np.nan
+
+        com_z_history.append(z)
+
+        # Détection takeoff / landing pour extraire la hauteur max par saut
+        on_ground = any(simulator.get_foot_contacts())
+        if prev_on_ground and not on_ground:
+            # décollage détecté
+            in_flight = True
+            current_max_z = z if not np.isnan(z) else -np.inf
+        if in_flight and not np.isnan(z):
+            current_max_z = max(current_max_z, z)
+        if in_flight and on_ground:
+            # atterrissage détecté -> finir le saut
+            in_flight = False
+            if current_max_z != -np.inf:
+                jump_max_heights.append(current_max_z)
+        prev_on_ground = on_ground
+
         recorded_steps += 1
         
 
@@ -200,6 +246,19 @@ def quadruped_jump():
         plt.show()
     else:
         print("No torque data recorded - nothing to plot.")
+
+     # --- nouveau: tracer la hauteur maximale du CoM par saut ---
+    if len(jump_max_heights) > 0:
+        fig3, ax3 = plt.subplots(figsize=(6,4))
+        jumps = np.arange(1, len(jump_max_heights)+1)
+        ax3.bar(jumps, jump_max_heights, color='C2')
+        ax3.set_xlabel('N° du saut')
+        ax3.set_ylabel('Hauteur max du centre de masse [m]')
+        ax3.set_title('Hauteur maximale du CoM par saut')
+        ax3.grid(True, axis='y', linestyle='--', alpha=0.5)
+        plt.show()
+    else:
+        print("Aucune hauteur de saut enregistrée (pas de décollage détecté).")
     
 
 def nominal_position(
