@@ -30,54 +30,49 @@ def quadruped_jump():
     jump_type =  TWIST_CLOCK_JUMP
 
     if jump_type == FORWARD_JUMP :
+        #Original tests :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
 
-        #Force profile standard
-        force_profile = FootForceProfile(f0 = 2.3541248102297856, f1= 1.1219896723165776, Fx=138.43977527686388, Fy=0, Fz=116.74868238420345) #devie pas mal mais donne qqch de bien
+        #Force profile standard, used for sweep plots
+        force_profile = FootForceProfile(f0 = 2.3541248102297856, f1= 1.1219896723165776, Fx=138.43977527686388, Fy=0, Fz=116.74868238420345) 
         
         #Force profile furthest
-
+        #force_profile = FootForceProfile(f0 = 3.1618566335749394, f1= 0.2, Fx=199.51350152452693, Fy=0, Fz=169.21072592303315) 
+        
         #Force profile fastest
-        #force_profile = FootForceProfile(f0= 4.343212604071553, f1= 2.9876247366014907, Fx = 216.50145070971192, Fy = -2.9792207053684034, Fz = 148.08179648496443)
-    
+        #force_profile = FootForceProfile(f0=4.949876822272058, f1= 1.0481210154402136, Fx = 169.08289614217253, Fy = 0, Fz = 147.1216351991661)
+ 
     elif jump_type == LATERAL_JUMP_LEFT :
+        #Original tests :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
 
-        #Force profile standard
+        #Force profile standard, used for sweep plots
         force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
         
         #Force profile furthest
-
-        #Force profile fastest
+        #force_profile = FootForceProfile(f0 = 2.4469872242469295, f1=0.2, Fx=0, Fy=166.74710973091592, Fz=143.41135021231855) #j'aime beaucoup le
+  
         
     elif jump_type == LATERAL_JUMP_RIGHT :
+        #Original tests :
         force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
 
-        #Force profile standard
-
-        #Force profile furthest
-
-        #Force profile fastest
 
     elif jump_type == TWIST_CLOCK_JUMP:
+        #Original tests :
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
 
-        #Force profile standard
+        #Force profile standard, used for sweep plots
         force_profile = FootForceProfile(f0 = 2.5098980383998857, f1=1.002748576410451, Fx=0, Fy=52.080701395137, Fz=91.27397149899963)
         
         #Force profile furthest
+        #force_profile = FootForceProfile(f0 = 2.275650067589716, f1=0.2, Fx=0, Fy=179.72168113290707, Fz=117.96377899690889)
+  
 
-        #Force profile fastest
-
-    
     elif jump_type == TWIST_COUNTER_CLOCK_JUMP :
+        #Original tests :
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
 
-        #Force profile standard
-
-        #Force profile furthest
-
-        #Force profile fastest
     
     # Determine number of jumps to simulate
     n_jumps = 6   # Feel free to change this number
