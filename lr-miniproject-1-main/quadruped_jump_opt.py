@@ -64,11 +64,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
-    f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = 150, high = 300)
-    Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
-    Fz = trial.suggest_float(name="Fz", low = 100, high = 150)
+    f0 = trial.suggest_float(name="f0", low = 2, high = 5)
+    f1 = trial.suggest_float(name="f1", low = 0.5, high = 2)
+    Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
+    #Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
+    Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
      
     # Reset the simulation
     simulator.reset()
@@ -87,10 +87,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=Fy, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=0, Fz=Fz)
 
     # Determine number of jumps to simulate
-    n_jumps = 6  # Feel free to change this number
+    n_jumps = 10  # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
@@ -102,6 +102,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     yaw_offset = 0
     max_roll = 0
     max_pitch = 0
+    nbr_step_in_air = 0
+    nbr_step_on_ground = 0
+    reward_for_time_in_air = 0.0005
+    punishment_deviation = 2
+    punishment_tilt = 4
     for _ in range(n_steps):
         # Step the oscillator
         force_profile.step(sim_options.timestep)
@@ -117,7 +122,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         on_ground = any(simulator.get_foot_contacts()) # TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
+            nbr_step_on_ground += 1
         else :
+            nbr_step_in_air += 1
             if jump_type == FORWARD_JUMP :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
@@ -163,13 +170,18 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         # Further along X
         objective_value = position[0]
         if abs(position[1]) > 0.05*position[0]:
-            objective_value -= 4
+            objective_value -= punishment_deviation
+
+        if (abs(max_roll) or abs(max_pitch) or abs(yaw_final)) > np.pi*0.1:
+            objective_value -= punishment_tilt
+        
+
 
     elif jump_type == LATERAL_JUMP_LEFT:
         # Positive Y direction
         objective_value = position[1]
         if abs(position[0]) > 0.05*position[1]:
-            objective_value -= 4
+            objective_value -= punishment_deviation
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
