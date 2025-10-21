@@ -73,14 +73,9 @@ def quadruped_jump():
     yaw_previous = 0
     yaw_offset = 0
 
-    # --- nouveau: stockage de la hauteur du centre de masse et détection de sauts ---
-    com_z_history = []           # hauteur du CoM à chaque pas (append)
-    jump_max_heights = []        # hauteur maximale mesurée pendant chaque vol (par saut)
-    in_flight = False
-    current_max_z = -np.inf
-    prev_on_ground = any(simulator.get_foot_contacts())
-
-
+  
+    # recording of the height of the center of mass (CoM) at each step
+    com_z_history = []           # height of CoM at each step (append)
     STANDING_HEIGHT = simulator.config["init_position"][2]
     FALL_THRESHOLD_Z = 0.8 * STANDING_HEIGHT  # or tune as needed
     fall_indices = []
@@ -145,50 +140,34 @@ def quadruped_jump():
         simulator.set_motor_targets(tau)
         simulator.step()
         
-        # --- nouveau: enregistrer la hauteur du centre de masse après la step ---
-        # lecture robuste de la position de base (selon l'API disponible)
-        z = np.nan
+      
+        # Record height of CoM for plotting
+        z_CoM= np.nan
         if hasattr(simulator, "get_base_position"):
             try:
-                z = simulator.get_base_position()[2]
+                z_CoM = simulator.get_base_position()[2]
             except Exception:
-                z = np.nan
+                z_CoM = np.nan
         elif hasattr(simulator, "get_base_pos"):
             try:
-                z = simulator.get_base_pos()[2]
+                z_CoM = simulator.get_base_pos()[2]
             except Exception:
-                z = np.nan
+                z_CoM = np.nan
         else:
             # fallback générique si l'API est différente
             try:
                 base = simulator.get_base_state()  # certain simulateurs ont ceci
-                z = base[2]
+                z_CoM = base[2]
             except Exception:
-                z = np.nan
+                z_CoM = np.nan
 
-        com_z_history.append(z)
+        com_z_history.append(z_CoM)
         on_ground = any(simulator.get_foot_contacts())
 
-        # --- Takeoff / Landing detection (your code) ---
-        if prev_on_ground and not on_ground:
-        # Takeoff detected
-            in_flight = True
-            current_max_z = z if not np.isnan(z) else -np.inf
-
-        if in_flight and not np.isnan(z):
-            current_max_z = max(current_max_z, z)
-
-        if in_flight and on_ground:
-            # Landing detected -> record jump
-            in_flight = False
-            if current_max_z != -np.inf:
-                jump_max_heights.append(current_max_z)
-
-        # --- FALL detection (added) ---
-        if (not on_ground) and (z < FALL_THRESHOLD_Z):
+        # fall detection 
+        if (not on_ground) and (z_CoM < FALL_THRESHOLD_Z):
             fall_indices.append(recorded_steps)
 
-        prev_on_ground = on_ground
 
         recorded_steps += 1
         
@@ -270,7 +249,7 @@ def quadruped_jump():
                 color='red', marker='x', label='Fall detected')
         axs3.set_xlabel('Simulation step')
         axs3.set_ylabel('CoM height [m]')
-        axs3.set_title('Center of Mass Height over Time - VMC:ON')
+        axs3.set_title('Center of Mass Height over Time - High CoM')
         axs3.legend()
         axs3.grid(True)
         plt.show()
