@@ -64,11 +64,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 2, high = 6)
-    f1 = trial.suggest_float(name="f1", low = 0.5, high = 1.2)
-    Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
-    #Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
-    Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
+    f0 = trial.suggest_float(name="f0", low = 2, high = 10)
+    #f1 = trial.suggest_float(name="f1", low = 0.5, high = 1.2)
+    #Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
+    Fy = trial.suggest_float(name="Fy", low = 70, high = 180)
+    Fz = trial.suggest_float(name="Fz", low = 70, high = 120)
      
     # Reset the simulation
     simulator.reset()
@@ -81,16 +81,16 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     FORWARD_JUMP = 0
     LATERAL_JUMP_LEFT = 1 #
     TWIST_CLOCK_JUMP = 3
-    speed = True #to optimize the fastest 
+    speed = False #to optimize the fastest 
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  TWIST_CLOCK_JUMP
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=0, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=0, Fy=Fy, Fz=Fz)
 
     # Determine number of jumps to simulate
-    n_jumps = 25  # Feel free to change this number
+    n_jumps = 1  # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
     n_steps = int((force_profile.idle_duration() + n_jumps * jump_duration) / sim_options.timestep)
 
