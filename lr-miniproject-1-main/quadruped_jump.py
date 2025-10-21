@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  LATERAL_JUMP_LEFT
+    jump_type =  TWIST_CLOCK_JUMP
 
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
@@ -44,7 +44,7 @@ def quadruped_jump():
     elif jump_type == TWIST_CLOCK_JUMP:
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 1.325320294340452, f1=1.8690900933179198, Fx=0.24756431632237863, Fy=57.395876398158684, Fz=93.68437102970628)
+        force_profile = FootForceProfile(f0 = 2.5098980383998857, f1=1.002748576410451, Fx=0, Fy=102.080701395137, Fz=91.27397149899963)
     elif jump_type == TWIST_COUNTER_CLOCK_JUMP :
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
     
@@ -58,7 +58,8 @@ def quadruped_jump():
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
     
-    
+    yaw_previous = 0
+    yaw_offset = 0
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
@@ -112,7 +113,14 @@ def quadruped_jump():
             for j in range(N_JOINTS):
                 foot_forces[recorded_steps, i, j] = apply_force_profile(simulator, force_profile, jump_type)[1][3*i + j] 
                 tau_rec[recorded_steps, i, j] = tau[3*i + j]  
-        
+        #used to have the yaw to compare the results between each optimization 
+        _,_, yaw = simulator.get_base_orientation_roll_pitch_yaw()
+        if (yaw - yaw_previous) >np.pi:
+            yaw_offset -= 2*np.pi
+        elif(yaw - yaw_previous) < -np.pi:
+            yaw += 2*np.pi
+        yaw_previous = yaw
+        yaw_final = yaw + yaw_offset
 
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
@@ -123,6 +131,8 @@ def quadruped_jump():
 
 
     # Close the simulation
+    print("position",simulator.get_base_position())
+    print("yaw:", yaw_final)
     simulator.close()
 
     # Trim recorded arrays in case the loop exited early

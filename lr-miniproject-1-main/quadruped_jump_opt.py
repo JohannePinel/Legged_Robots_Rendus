@@ -48,7 +48,7 @@ def quadruped_jump_optimization():
     # Log the results
     print("Best value:", study.best_value)
     print("Best params:", study.best_params)
-
+    
     # OPTIONAL: add additional functions here (e.g., plotting, recording to file)
     # E.g., cycling through all the evaluated parameters and values:
     for trial in study.get_trials():
@@ -64,11 +64,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 2, high = 5)
-    f1 = trial.suggest_float(name="f1", low = 0.5, high = 2)
+    f0 = trial.suggest_float(name="f0", low = 2, high = 4)
+    f1 = trial.suggest_float(name="f1", low = 1, high = 2)
     #Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
-    Fy = trial.suggest_float(name="Fy", low = 50, high = 200)
-    Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
+    Fy = trial.suggest_float(name="Fy", low = 40, high = 150)
+    Fz = trial.suggest_float(name="Fz", low = 40, high = 100)
      
     # Reset the simulation
     simulator.reset()
@@ -83,7 +83,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 
     speed = False #to optimize the fastest 
 
-    jump_type =  LATERAL_JUMP_LEFT
+    jump_type =  TWIST_CLOCK_JUMP
 
     
     # TODO: set parameters for the foot force profile here
@@ -188,6 +188,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
         objective_value = -yaw_final #proble yax est en -pi et +pi et prends en compte que la position finale
+        if (abs(max_roll) or abs(max_pitch) ) > np.pi*0.25:
+            objective_value -= punishment_tilt*(-yaw_final)/(2*np.pi)
+        if (np.sqrt(position[0]**2 + position[1]**2) >1):
+            objective_value -= punishment_deviation*(-yaw_final)/(2*np.pi)
     
     # TO MEASURE FASTEST
     
