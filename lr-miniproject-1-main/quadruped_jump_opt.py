@@ -67,8 +67,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     f0 = trial.suggest_float(name="f0", low = 2, high = 10)
     #f1 = trial.suggest_float(name="f1", low = 2, high = 6)
     #Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
-    Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
-    Fz = trial.suggest_float(name="Fz", low = 100, high = 150)
+    Fy = trial.suggest_float(name="Fy", low = 70, high = 180)
+    Fz = trial.suggest_float(name="Fz", low = 70, high = 120)
      
     # Reset the simulation
     simulator.reset()
@@ -80,10 +80,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # the only 3 type of jumps to opptimze
     FORWARD_JUMP = 0 
     LATERAL_JUMP_LEFT = 1 #
-    TWIST_CLOCK_JUMP = 3 
+    TWIST_CLOCK_JUMP = 3
     speed = True #to optimize the fastest 
 
-    jump_type =  LATERAL_JUMP_LEFT
+    jump_type =  TWIST_CLOCK_JUMP
 
     
     # TODO: set parameters for the foot force profile here
@@ -142,9 +142,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         if (yaw - yaw_previous) >np.pi:
             yaw_offset -= 2*np.pi
         elif(yaw - yaw_previous) < -np.pi:
-            yaw += 2*np.pi
+            yaw_offset += 2*np.pi
         yaw_previous = yaw
         yaw_final = yaw + yaw_offset
+
         if (abs(max_pitch) < abs(pitch)):
             max_pitch = pitch
         if(abs(max_roll) < abs(roll)):
@@ -185,10 +186,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
         objective_value = -yaw_final #proble yax est en -pi et +pi et prends en compte que la position finale
         if (abs(max_roll) or abs(max_pitch) ) > np.pi*0.25:
-            objective_value -= punishment_tilt*(-yaw_final)/(2*np.pi)
-        if (np.sqrt(position[0]**2 + position[1]**2) >1):
-            objective_value -= punishment_deviation*(-yaw_final)/(2*np.pi)
-    
+            objective_value -= punishment_tilt
+        """if (np.sqrt(position[0]**2 + position[1]**2) >1):
+            objective_value -= punishment_deviation*(-yaw_final)/(2*np.pi)"""
     # TO MEASURE FASTEST
     
     end_pos = simulator.get_base_position()
@@ -196,8 +196,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     if speed and (jump_type == FORWARD_JUMP):
         # Further along X
         objective_value = average_velocity[0]
-    if ((abs(yaw_final) or abs(max_roll)) > np.pi*0.125) or (abs(max_pitch) > np.pi*0.125):
-            objective_value -= punishment_tilt    
+        if ((abs(yaw_final) or abs(max_roll)) > np.pi*0.125) or (abs(max_pitch) > np.pi*0.125):
+            objective_value -= punishment_tilt   
+
     return objective_value
     
 

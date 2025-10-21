@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  LATERAL_JUMP_LEFT
+    jump_type =  TWIST_CLOCK_JUMP
 
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
@@ -44,7 +44,7 @@ def quadruped_jump():
     elif jump_type == TWIST_CLOCK_JUMP:
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 2.5098980383998857, f1=1.002748576410451, Fx=0, Fy=102.080701395137, Fz=91.27397149899963)
+        force_profile = FootForceProfile(f0 = 2.275650067589716, f1=0.3, Fx=0, Fy=179.72168113290707, Fz=117.96377899690889)
     elif jump_type == TWIST_COUNTER_CLOCK_JUMP :
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
     
