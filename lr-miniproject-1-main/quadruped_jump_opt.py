@@ -64,8 +64,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 1, high = 4)
-    f1 = trial.suggest_float(name="f1", low = 1, high = 1)
+    f0 = trial.suggest_float(name="f0", low = 2, high = 5)
+    f1 = trial.suggest_float(name="f1", low = 0.5, high = 2)
     #Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
     Fy = trial.suggest_float(name="Fy", low = 50, high = 200)
     Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
@@ -182,7 +182,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         objective_value = position[1]
         if abs(position[0]) > 0.05*position[1]:
             objective_value -= punishment_deviation
-        if (abs(max_roll) or abs(max_pitch) or abs(yaw_final)) > np.pi*0.25:
+        if ((abs(yaw_final) or abs(max_pitch)) > np.pi*0.125) or (abs(max_roll) > np.pi*0.5):
             objective_value -= punishment_tilt
 
     elif jump_type == TWIST_CLOCK_JUMP:
