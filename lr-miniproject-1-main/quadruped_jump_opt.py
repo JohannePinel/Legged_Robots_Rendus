@@ -64,11 +64,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 2, high = 10)
-    #f1 = trial.suggest_float(name="f1", low = 2, high = 6)
-    Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
+    f0 = trial.suggest_float(name="f0", low = 2, high = 6)
+    f1 = trial.suggest_float(name="f1", low = 0.5, high = 1.2)
+    Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
     #Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
-    Fz = trial.suggest_float(name="Fz", low = 100, high = 250)
+    Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
      
     # Reset the simulation
     simulator.reset()
@@ -81,16 +81,16 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     FORWARD_JUMP = 0
     LATERAL_JUMP_LEFT = 1 #
     TWIST_CLOCK_JUMP = 3
-    speed = False #to optimize the fastest 
+    speed = True #to optimize the fastest 
 
     jump_type =  FORWARD_JUMP
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=Fx, Fy=0, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=0, Fz=Fz)
 
     # Determine number of jumps to simulate
-    n_jumps = 1  # Feel free to change this number
+    n_jumps = 25  # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
     n_steps = int((force_profile.idle_duration() + n_jumps * jump_duration) / sim_options.timestep)
 
@@ -106,6 +106,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     nbr_step_on_ground = 0
     punishment_not_full_contact = 2
     punishment_tilt = 4
+    punishment_deviation = 5
+
     for _ in range(n_steps):
         # Step the oscillator
         force_profile.step(sim_options.timestep)
@@ -197,8 +199,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     if speed and (jump_type == FORWARD_JUMP):
         # Further along X
         objective_value = average_velocity[0]
-        if ((abs(yaw_final) or abs(max_roll)) > np.pi*0.125) or (abs(max_pitch) > np.pi*0.125):
-            objective_value -= punishment_tilt   
+        if abs(position[1]) > 0.05*position[0]:
+            objective_value -= punishment_deviation
+        if (abs(max_roll) or abs(max_pitch) or abs(yaw_final)) > np.pi*0.125:
+            objective_value -= punishment_tilt  
 
     return objective_value
     
