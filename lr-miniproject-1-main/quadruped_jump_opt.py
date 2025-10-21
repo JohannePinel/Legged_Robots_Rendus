@@ -66,9 +66,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 2, high = 10)
     #f1 = trial.suggest_float(name="f1", low = 2, high = 6)
-    Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
-    #Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
-    Fz = trial.suggest_float(name="Fz", low = 100, high = 250)
+    #Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
+    Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
+    Fz = trial.suggest_float(name="Fz", low = 100, high = 150)
      
     # Reset the simulation
     simulator.reset()
@@ -83,11 +83,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 
     speed = True #to optimize the fastest 
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  LATERAL_JUMP_LEFT
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=0.3, Fx=Fx, Fy=0, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=0.3, Fx=0, Fy=Fy, Fz=Fz)
 
     # Determine number of jumps to simulate
     n_jumps = 1  # Feel free to change this number
@@ -178,8 +178,6 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     elif jump_type == LATERAL_JUMP_LEFT:
         # Positive Y direction
         objective_value = position[1]
-        if abs(position[0]) > 0.05*position[1]:
-            objective_value -= punishment_deviation
         if ((abs(yaw_final) or abs(max_pitch)) > np.pi*0.125) or (abs(max_roll) > np.pi*0.5):
             objective_value -= punishment_tilt
 
