@@ -21,34 +21,63 @@ def quadruped_jump():
     
     # TODO: set parameters for the foot force profile here
     
-    FORWARD_JUMP = 0 #works but not ideal
-    LATERAL_JUMP_LEFT = 1 #
+    FORWARD_JUMP = 0 
+    LATERAL_JUMP_LEFT = 1 
     LATERAL_JUMP_RIGHT = 2
-    TWIST_CLOCK_JUMP = 3 #works but not ideal
-    TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
+    TWIST_CLOCK_JUMP = 3
+    TWIST_COUNTER_CLOCK_JUMP = 4
 
-    jump_type = LATERAL_JUMP_LEFT
+    jump_type =  TWIST_CLOCK_JUMP
 
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
-        #Force profile furthest
+
+        #Force profile standard
         force_profile = FootForceProfile(f0 = 2.3541248102297856, f1= 1.1219896723165776, Fx=138.43977527686388, Fy=0, Fz=116.74868238420345) #devie pas mal mais donne qqch de bien
+        
+        #Force profile furthest
+
         #Force profile fastest
         #force_profile = FootForceProfile(f0= 4.343212604071553, f1= 2.9876247366014907, Fx = 216.50145070971192, Fy = -2.9792207053684034, Fz = 148.08179648496443)
+    
     elif jump_type == LATERAL_JUMP_LEFT :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
+
+        #Force profile standard
+        force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
+        
         #Force profile furthest
-        #force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
-        force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=98.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
-   
+
+        #Force profile fastest
+        
     elif jump_type == LATERAL_JUMP_RIGHT :
         force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
+
+        #Force profile standard
+
+        #Force profile furthest
+
+        #Force profile fastest
+
     elif jump_type == TWIST_CLOCK_JUMP:
         #force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist stable
+
+        #Force profile standard
+        force_profile = FootForceProfile(f0 = 2.5098980383998857, f1=1.002748576410451, Fx=0, Fy=52.080701395137, Fz=91.27397149899963)
+        
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 2.5098980383998857, f1=1.002748576410451, Fx=0, Fy=102.080701395137, Fz=91.27397149899963)
+
+        #Force profile fastest
+
+    
     elif jump_type == TWIST_COUNTER_CLOCK_JUMP :
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
+
+        #Force profile standard
+
+        #Force profile furthest
+
+        #Force profile fastest
     
     # Determine number of jumps to simulate
     n_jumps = 6   # Feel free to change this number
@@ -159,7 +188,7 @@ def quadruped_jump():
         else:
             # fallback générique si l'API est différente
             try:
-                base = simulator.get_base_state()  # certain simulateurs ont ceci
+                base = simulator.get_base_state()  
                 z_CoM = base[2]
             except Exception:
                 z_CoM = np.nan
@@ -261,7 +290,7 @@ def quadruped_jump():
                 color='red', marker='x', label='Fall detected')
         axs3.set_xlabel('Simulation step')
         axs3.set_ylabel('CoM height [m]')
-        axs3.set_title('Center of Mass Height over Time - Chosen CoM')
+        axs3.set_title('Center of Mass Height over Time - Type Jump')
         axs3.legend()
         axs3.grid(True)
         plt.show()
@@ -274,16 +303,21 @@ def quadruped_jump():
     t = np.array(t_history)
 
     if jump_type == 0 :
-        threshold_roll = 0.025      # radians, adjust to what you consider 'stable'
-        threshold_pitch = 0.4   # radians, adjust to what you consider 'stable'
+        threshold_roll = 0.025      
+        threshold_pitch = 0.4   
     elif jump_type == 1 :
-        threshold_roll = 0.5      # radians, adjust to what you consider 'stable'
+        threshold_roll = 0.5      
         threshold_pitch = 0.12 
+    elif jump_type == 3 :
+        threshold_roll = 0.25      
+        threshold_pitch = 0.4
     fig4, axs4 = plt.subplots(2, 1, sharex=True, figsize=(9,5))
     if recorded_steps > 0:
         axs4[0].plot(t, roll, label='roll')
         if jump_type == 1 :
             axs4[0].axhline(threshold_roll/4, linestyle='--', label=f'+{threshold_roll}/4 rad')
+        elif jump_type == 3 :
+            axs4[0].axhline(threshold_roll/1.5, linestyle='--', label=f'+{threshold_roll}/1.5 rad')
         else :
             axs4[0].axhline(threshold_roll, linestyle='--', label=f'+{threshold_roll} rad')
         axs4[0].axhline(-threshold_roll, linestyle='--', label=f'-{threshold_roll} rad')
@@ -293,12 +327,16 @@ def quadruped_jump():
             axs4[0].set_ylim(-0.1, 0.1) 
         elif jump_type == 1 :
             axs4[1].set_ylim(-1, 1)
+        elif jump_type == 3 :
+            axs4[1].set_ylim(-1, 1)
         
         axs4[0].legend(); axs4[0].grid(True)
 
         axs4[1].plot(t, pitch, label='pitch')
         if jump_type == 1 :
             axs4[1].axhline(threshold_pitch/4, linestyle='--', label=f'+{threshold_pitch}/4 rad')
+        elif jump_type == 3 :
+            axs4[1].axhline(threshold_pitch/3, linestyle='--', label=f'+{threshold_pitch}/3 rad')
         else :
             axs4[1].axhline(threshold_pitch, linestyle='--', label=f'+{threshold_pitch} rad')
         axs4[1].axhline(-threshold_pitch, linestyle='--', label=f'-{threshold_pitch} rad')
@@ -309,9 +347,11 @@ def quadruped_jump():
             axs4[1].set_ylim(-1, 1)
         elif jump_type == 1 :
             axs4[1].set_ylim(-0.5, 0.5)
+        elif jump_type == 3 :
+            axs4[1].set_ylim(-0.75, 0.75)
         axs4[1].legend(); axs4[1].grid(True)
 
-        plt.suptitle('Body orientation : Roll & Pitch - Lateral Jump, Fy + 25N')
+        plt.suptitle('Body orientation : Roll & Pitch - Type Jump')
         plt.tight_layout()
         plt.show()
     else:
@@ -392,8 +432,6 @@ def gravity_compensation(
         J, _= simulator.get_jacobian_and_position(leg_id) #jacobian for each foot
         if gnd_contact[leg_id]:
             tau_i = J.T @ (-np.array([0, 0, 9.8*simulator.get_mass()*foot_div]))
-            #if leg_id <=1 :
-                #tau_i = 2*tau_i # because we have more weight in the front
         else:
             tau_i = 0
         # Store in torques array
@@ -417,9 +455,7 @@ def apply_force_profile(
         F_foot_i = force_profile.force() #F_foot[0] pour Fx, F_foot[1] pour Fy, F_foot[2] pour Fz
         if jump_type == 0:            # FORWARD_JUMP
             if leg_id in [0, 1]:
-                #print(F_foot_i[2],"forward", leg_id)
                 F_foot_i[2] *= 1.3
-                #print(F_foot_i[2],"forward", leg_id)
         
         if jump_type == 1:            # LATERAL JUMP LEFT
             if leg_id == (2):  # pattes arrière
