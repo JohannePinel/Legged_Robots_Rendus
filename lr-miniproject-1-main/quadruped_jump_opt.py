@@ -64,10 +64,10 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 2, high = 5)
-    f1 = trial.suggest_float(name="f1", low = 0.5, high = 2)
-    Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
-    #Fy = trial.suggest_float(name="Fy", low = -5, high = 5)
+    f0 = trial.suggest_float(name="f0", low = 1, high = 4)
+    f1 = trial.suggest_float(name="f1", low = 1, high = 1)
+    #Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
+    Fy = trial.suggest_float(name="Fy", low = 50, high = 200)
     Fz = trial.suggest_float(name="Fz", low = 50, high = 150)
      
     # Reset the simulation
@@ -83,11 +83,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3 
     speed = False #to optimize the fastest 
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  LATERAL_JUMP_LEFT
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=0, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=0, Fy=Fy, Fz=Fz)
 
     # Determine number of jumps to simulate
     n_jumps = 10  # Feel free to change this number
@@ -182,6 +182,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         objective_value = position[1]
         if abs(position[0]) > 0.05*position[1]:
             objective_value -= punishment_deviation
+        if (abs(max_roll) or abs(max_pitch) or abs(yaw_final)) > np.pi*0.25:
+            objective_value -= punishment_tilt
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
