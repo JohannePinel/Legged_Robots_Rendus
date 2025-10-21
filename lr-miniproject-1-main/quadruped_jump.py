@@ -80,6 +80,11 @@ def quadruped_jump():
     current_max_z = -np.inf
     prev_on_ground = any(simulator.get_foot_contacts())
 
+
+    STANDING_HEIGHT = simulator.config["init_position"][2]
+    FALL_THRESHOLD_Z = 0.8 * STANDING_HEIGHT  # or tune as needed
+    fall_indices = []
+
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
@@ -162,20 +167,27 @@ def quadruped_jump():
                 z = np.nan
 
         com_z_history.append(z)
-
-        # Détection takeoff / landing pour extraire la hauteur max par saut
         on_ground = any(simulator.get_foot_contacts())
+
+        # --- Takeoff / Landing detection (your code) ---
         if prev_on_ground and not on_ground:
-            # décollage détecté
+        # Takeoff detected
             in_flight = True
             current_max_z = z if not np.isnan(z) else -np.inf
+
         if in_flight and not np.isnan(z):
             current_max_z = max(current_max_z, z)
+
         if in_flight and on_ground:
-            # atterrissage détecté -> finir le saut
+            # Landing detected -> record jump
             in_flight = False
             if current_max_z != -np.inf:
                 jump_max_heights.append(current_max_z)
+
+        # --- FALL detection (added) ---
+        if (not on_ground) and (z < FALL_THRESHOLD_Z):
+            fall_indices.append(recorded_steps)
+
         prev_on_ground = on_ground
 
         recorded_steps += 1
@@ -247,19 +259,23 @@ def quadruped_jump():
     else:
         print("No torque data recorded - nothing to plot.")
 
-     # --- nouveau: tracer la hauteur maximale du CoM par saut ---
-    if len(jump_max_heights) > 0:
-        fig3, ax3 = plt.subplots(figsize=(6,4))
-        jumps = np.arange(1, len(jump_max_heights)+1)
-        ax3.bar(jumps, jump_max_heights, color='C2')
-        ax3.set_xlabel('N° du saut')
-        ax3.set_ylabel('Hauteur max du centre de masse [m]')
-        ax3.set_title('Hauteur maximale du CoM par saut')
-        ax3.grid(True, axis='y', linestyle='--', alpha=0.5)
+
+
+    # Show CoM evolution with falls
+    fig3, axs3 = plt.subplots(figsize=(8, 4))
+    if recorded_steps > 0:
+        axs3.plot(com_z_history, label='CoM height')
+        axs3.axhline(FALL_THRESHOLD_Z, linestyle='--', color='gray', label='Fall threshold')
+        axs3.scatter(fall_indices, [com_z_history[i] for i in fall_indices],
+                color='red', marker='x', label='Fall detected')
+        axs3.set_xlabel('Simulation step')
+        axs3.set_ylabel('CoM height [m]')
+        axs3.set_title('Center of Mass Height over Time - VMC:ON')
+        axs3.legend()
+        axs3.grid(True)
         plt.show()
     else:
-        print("Aucune hauteur de saut enregistrée (pas de décollage détecté).")
-    
+        print("No CoM data recorded - nothing to plot.")
 
 def nominal_position(
     simulator: QuadSimulator,
