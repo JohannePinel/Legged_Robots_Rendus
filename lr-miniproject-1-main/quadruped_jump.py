@@ -249,7 +249,7 @@ def quadruped_jump():
                 color='red', marker='x', label='Fall detected')
         axs3.set_xlabel('Simulation step')
         axs3.set_ylabel('CoM height [m]')
-        axs3.set_title('Center of Mass Height over Time - High CoM')
+        axs3.set_title('Center of Mass Height over Time - Chosen CoM')
         axs3.legend()
         axs3.grid(True)
         plt.show()
@@ -259,6 +259,10 @@ def quadruped_jump():
 def nominal_position(
     simulator: QuadSimulator,
     des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]), #position juste en dessous des hanche
+    #des_foot_pos = np.array([[0,-0.0838, -0.325],[0,0.0838, -0.325],[0,-0.0838, -0.25],[0,0.0838, -0.25]]), #CoM high
+    #des_foot_pos = np.array([[0,-0.0838, -0.125],[0,0.0838, -0.125],[0,-0.0838, -0.05],[0,0.0838, -0.05]]), #CoM very low
+
+
     kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1])# valeur arbitraire
