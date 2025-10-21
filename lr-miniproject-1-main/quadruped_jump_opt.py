@@ -38,7 +38,7 @@ def quadruped_jump_optimization():
     # Create a maximization problem
     objective = partial(evaluate_jumping, simulator=simulator)
     # declare sampler_seed so we can record it in the CSV
-    sampler_seed = 24 
+    sampler_seed = 1 
     sampler = optuna.samplers.TPESampler(seed=sampler_seed)
     study = optuna.create_study(
         study_name="Quadruped Jumping Optimization",
@@ -58,7 +58,7 @@ def quadruped_jump_optimization():
     print("Best params:", study.best_params)
     
     # --- append best result to CSV file ---
-    out_csv = "optuna_best_results.csv"
+    out_csv = "optuna_best_results_lateral.csv"
     # ensure directory exists if using a path (here file in cwd)
     write_header = not os.path.exists(out_csv)
     # record: seed (sampler seed), study name, best value and params
@@ -92,9 +92,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 2, high = 10)
     #f1 = trial.suggest_float(name="f1", low = 0.5, high = 1.2)
-    Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
-    #Fy = trial.suggest_float(name="Fy", low = 70, high = 180)
-    Fz = trial.suggest_float(name="Fz", low = 100, high = 250)
+    #Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
+    Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
+    Fz = trial.suggest_float(name="Fz", low = 100, high = 150)
      
     # Reset the simulation
     simulator.reset()
@@ -109,11 +109,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3
     speed = False #to optimize the fastest 
 
-    jump_type =  FORWARD_JUMP
+    jump_type =  LATERAL_JUMP_LEFT
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=Fx, Fy=0, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=0, Fy=Fy, Fz=Fz)
 
     # Determine number of jumps to simulate
     n_jumps = 1  # Feel free to change this number

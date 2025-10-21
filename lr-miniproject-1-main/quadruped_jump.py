@@ -14,7 +14,7 @@ def quadruped_jump():
     sim_options = SimulationOptions(
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
-        record_video=False,  # Whether to record a video to file (needs render=True)
+        record_video=True,  # Whether to record a video to file (needs render=True)
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_CLOCK_JUMP
+    jump_type =  FORWARD_JUMP
 
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
@@ -49,7 +49,7 @@ def quadruped_jump():
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
     
     # Determine number of jumps to simulate
-    n_jumps = 1   # Feel free to change this number
+    n_jumps = 25   # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
     n_steps = int((force_profile.idle_duration() + n_jumps * jump_duration) / sim_options.timestep)
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
