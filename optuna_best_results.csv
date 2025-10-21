@@ -1,0 +1,3 @@
+seed,study_name,best_value,best_params
+42,Quadruped Jumping Optimization,0.5053001463883093,"{""f0"": 3.1618566335749394, ""Fx"": 199.51350152452693, ""Fz"": 169.21072592303315}"
+24,Quadruped Jumping Optimization,0.5026970457157319,"{""f0"": 3.281509561067931, ""Fx"": 199.61312254098277, ""Fz"": 235.29085087723215}"
