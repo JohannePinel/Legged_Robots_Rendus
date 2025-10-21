@@ -80,6 +80,12 @@ def quadruped_jump():
     FALL_THRESHOLD_Z = 0.8 * STANDING_HEIGHT  # or tune as needed
     fall_indices = []
 
+    # recording roll and pitch to check for instability
+    t_history = []
+    roll_history = []
+    pitch_history = []
+    yaw_history = []
+
     for step in range(n_steps):
         # If the simulator is closed, stop the loopS
         if not simulator.is_connected():
@@ -168,6 +174,13 @@ def quadruped_jump():
         if (not on_ground) and (z_CoM < FALL_THRESHOLD_Z):
             fall_indices.append(recorded_steps)
 
+        # roll and pitch recording
+        # record time and orientation each step
+        t_history.append(simulator.time())  # or len(t_history)*sim_options.timestep
+        rpy = simulator.get_base_orientation_roll_pitch_yaw()
+        roll_history.append(rpy[0])
+        pitch_history.append(rpy[1])
+        yaw_history.append(rpy[2])
 
         recorded_steps += 1
         
@@ -255,6 +268,37 @@ def quadruped_jump():
         plt.show()
     else:
         print("No CoM data recorded - nothing to plot.")
+
+    # Roll and pitch plotting
+    roll = np.array(roll_history)
+    pitch = np.array(pitch_history)
+    t = np.array(t_history)
+
+    threshold_roll = 0.04      # radians, adjust to what you consider 'stable'
+    threshold_pitch = 0.35   # radians, adjust to what you consider 'stable'
+ 
+    fig4, axs4 = plt.subplots(2, 1, sharex=True, figsize=(9,5))
+    if recorded_steps > 0:
+        axs4[0].plot(t, roll, label='roll')
+        axs4[0].axhline(threshold_roll, linestyle='--', label=f'+{threshold_roll} rad')
+        axs4[0].axhline(-threshold_roll, linestyle='--', label=f'-{threshold_roll} rad')
+        
+        axs4[0].set_ylabel('roll [rad]')
+        axs4[0].legend(); axs4[0].grid(True)
+
+        axs4[1].plot(t, pitch, label='pitch')
+        axs4[1].axhline(threshold_pitch, linestyle='--', label=f'+{threshold_pitch} rad')
+        axs4[1].axhline(-threshold_pitch, linestyle='--', label=f'-{threshold_pitch} rad')
+        
+        axs4[1].set_xlabel('time [s]')
+        axs4[1].set_ylabel('pitch [rad]')
+        axs4[1].legend(); axs4[1].grid(True)
+
+        plt.suptitle('Body orientation : Roll & Pitch')
+        plt.tight_layout()
+        plt.show()
+    else:
+        print("No orientation data recorded - nothing to plot.")
 
 def nominal_position(
     simulator: QuadSimulator,
