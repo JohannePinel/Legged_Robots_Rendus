@@ -67,8 +67,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     f0 = trial.suggest_float(name="f0", low = 2, high = 10)
     #f1 = trial.suggest_float(name="f1", low = 2, high = 6)
     #Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
-    Fy = trial.suggest_float(name="Fy", low = 70, high = 180)
-    Fz = trial.suggest_float(name="Fz", low = 70, high = 120)
+    Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
+    Fz = trial.suggest_float(name="Fz", low = 100, high = 150)
      
     # Reset the simulation
     simulator.reset()
@@ -83,11 +83,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     TWIST_CLOCK_JUMP = 3
     speed = True #to optimize the fastest 
 
-    jump_type =  TWIST_CLOCK_JUMP
+    jump_type =  LATERAL_JUMP_LEFT
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=0.3, Fx=0, Fy=Fy, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=0, Fy=Fy, Fz=Fz)
 
     # Determine number of jumps to simulate
     n_jumps = 1  # Feel free to change this number
@@ -104,8 +104,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     max_pitch = 0
     nbr_step_in_air = 0
     nbr_step_on_ground = 0
-    reward_for_time_in_air = 0.0005
-    punishment_deviation = 2
+    punishment_not_full_contact = 2
     punishment_tilt = 4
     for _ in range(n_steps):
         # Step the oscillator
@@ -181,6 +180,7 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         objective_value = position[1]
         if ((abs(yaw_final) or abs(max_pitch)) > np.pi*0.125) or (abs(max_roll) > np.pi*0.5):
             objective_value -= punishment_tilt
+        
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)

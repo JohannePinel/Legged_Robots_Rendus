@@ -38,7 +38,7 @@ def quadruped_jump():
     elif jump_type == LATERAL_JUMP_LEFT :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 3.309891175726868, f1=0.3, Fx=0, Fy=169.30785772526113, Fz=135.13159622630343) #j'aime beaucoup le
+        force_profile = FootForceProfile(f0 = 2.4469872242469295, f1=0.2, Fx=0, Fy=166.74710973091592, Fz=143.41135021231855) #j'aime beaucoup le
     elif jump_type == LATERAL_JUMP_RIGHT :
         force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
     elif jump_type == TWIST_CLOCK_JUMP:
