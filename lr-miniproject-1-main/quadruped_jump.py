@@ -14,7 +14,7 @@ def quadruped_jump():
     sim_options = SimulationOptions(
         on_rack=False,  # Whether to suspend the robot in the air (helpful for debugging)
         render=True,  # Whether to use the GUI visualizer (slower than running in the background)
-        record_video=False,  # Whether to record a video to file (needs render=True)
+        record_video=True,  # Whether to record a video to file (needs render=True)
         tracking_camera=True,  # Whether the camera follows the robot (instead of free)
     )
     simulator = QuadSimulator(sim_options)
@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3
     TWIST_COUNTER_CLOCK_JUMP = 4
 
-    jump_type =  TWIST_CLOCK_JUMP
+    jump_type =  FORWARD_JUMP
 
     if jump_type == FORWARD_JUMP :
         #Original tests :
@@ -75,15 +75,17 @@ def quadruped_jump():
 
     
     # Determine number of jumps to simulate
-    n_jumps = 6   # Feel free to change this number
+    n_jumps = 25   # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
-    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
+    n_steps = int((force_profile.idle_duration() + n_jumps * jump_duration) / sim_options.timestep)
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
-    
+    #parameter used to compare results
+    total_time = n_steps * sim_options.timestep
+    start_pos = simulator.get_base_position()
     yaw_previous = 0
     yaw_offset = 0
 
@@ -204,12 +206,14 @@ def quadruped_jump():
         yaw_history.append(rpy[2])
 
         recorded_steps += 1
-        
-
-
-    # Close the simulation
+    #To compare the values of the optimization
+    end_pos = simulator.get_base_position() 
+    average_velocity = (end_pos - start_pos) / total_time 
     print("position",simulator.get_base_position())
     print("yaw:", yaw_final)
+    print("average velocity", average_velocity[0])
+
+    # Close the simulation
     simulator.close()
 
     # Trim recorded arrays in case the loop exited early
