@@ -32,9 +32,9 @@ def quadruped_jump():
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
         #Force profile furthest
-        #force_profile = FootForceProfile(f0 = 2.3541248102297856, f1= 1.1219896723165776, Fx=138.43977527686388, Fy=0, Fz=116.74868238420345) #devie pas mal mais donne qqch de bien
+        force_profile = FootForceProfile(f0 = 3.3219102641552096, f1= 0.3, Fx=196.52325178791946, Fy=0, Fz=200.66212665210494) #devie pas mal mais donne qqch de bien
         #Force profile fastest
-        force_profile = FootForceProfile(f0=3.081962803406135, f1= 1.1329416962458057, Fx = 155.19564752686514, Fy = 0, Fz = 128.97180971499807)
+        #force_profile = FootForceProfile(f0=3.081962803406135, f1= 1.1329416962458057, Fx = 155.19564752686514, Fy = 0, Fz = 128.97180971499807)
     elif jump_type == LATERAL_JUMP_LEFT :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
         #Force profile furthest
@@ -49,9 +49,9 @@ def quadruped_jump():
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
     
     # Determine number of jumps to simulate
-    n_jumps = 10   # Feel free to change this number
+    n_jumps = 1   # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
-    n_steps = int(n_jumps * jump_duration / sim_options.timestep)
+    n_steps = int((force_profile.idle_duration() + n_jumps * jump_duration) / sim_options.timestep)
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
     
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
