@@ -27,14 +27,14 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type =  TWIST_CLOCK_JUMP
+    jump_type =  FORWARD_JUMP
 
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 2.3541248102297856, f1= 1.1219896723165776, Fx=138.43977527686388, Fy=0, Fz=116.74868238420345) #devie pas mal mais donne qqch de bien
+        #force_profile = FootForceProfile(f0 = 2.3541248102297856, f1= 1.1219896723165776, Fx=138.43977527686388, Fy=0, Fz=116.74868238420345) #devie pas mal mais donne qqch de bien
         #Force profile fastest
-        #force_profile = FootForceProfile(f0= 4.343212604071553, f1= 2.9876247366014907, Fx = 216.50145070971192, Fy = -2.9792207053684034, Fz = 148.08179648496443)
+        force_profile = FootForceProfile(f0=3.081962803406135, f1= 1.1329416962458057, Fx = 155.19564752686514, Fy = 0, Fz = 128.97180971499807)
     elif jump_type == LATERAL_JUMP_LEFT :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
         #Force profile furthest
@@ -49,7 +49,7 @@ def quadruped_jump():
         force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
     
     # Determine number of jumps to simulate
-    n_jumps = 6   # Feel free to change this number
+    n_jumps = 10   # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
     # allocate storage for per-step per-foot force vectors (Fx,Fy,Fz)
@@ -57,7 +57,9 @@ def quadruped_jump():
     foot_forces = np.zeros((n_steps, N_LEGS, 3))
     tau_rec = np.zeros((n_steps, N_LEGS, 3))
     recorded_steps = 0
-    
+    #parameter used to compare results
+    total_time = n_steps * sim_options.timestep
+    start_pos = simulator.get_base_position()
     yaw_previous = 0
     yaw_offset = 0
     for step in range(n_steps):
@@ -127,12 +129,14 @@ def quadruped_jump():
         simulator.step()
         
         recorded_steps += 1
-        
-
-
-    # Close the simulation
+    #To compare the values of the optimization
+    end_pos = simulator.get_base_position() 
+    average_velocity = (end_pos - start_pos) / total_time 
     print("position",simulator.get_base_position())
     print("yaw:", yaw_final)
+    print("average velocity", average_velocity[0])
+
+    # Close the simulation
     simulator.close()
 
     # Trim recorded arrays in case the loop exited early
