@@ -40,7 +40,7 @@ def quadruped_jump_optimization():
 
     # Run the optimization
     # You can change the number of trials here
-    study.optimize(objective, n_trials=15)
+    study.optimize(objective, n_trials=50)
 
     # Close the simulation
     simulator.close()
@@ -48,7 +48,7 @@ def quadruped_jump_optimization():
     # Log the results
     print("Best value:", study.best_value)
     print("Best params:", study.best_params)
-
+    
     # OPTIONAL: add additional functions here (e.g., plotting, recording to file)
     # E.g., cycling through all the evaluated parameters and values:
     for trial in study.get_trials():
@@ -64,11 +64,11 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     # You can then plug in the value in your controller
    
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
-    f0 = trial.suggest_float(name="f0", low = 0.5, high = 5)
-    f1 = trial.suggest_float(name="f1", low = 0.5, high = 5)
-    Fx = trial.suggest_float(name="Fx", low = -5, high = 5)
-    Fy = trial.suggest_float(name="Fy", low = 25, high = 100)
-    Fz = trial.suggest_float(name="Fz", low = 50, high = 200)
+    f0 = trial.suggest_float(name="f0", low = 2, high = 4)
+    f1 = trial.suggest_float(name="f1", low = 1, high = 2)
+    #Fx = trial.suggest_float(name="Fx", low = 50, high = 200)
+    Fy = trial.suggest_float(name="Fy", low = 40, high = 150)
+    Fz = trial.suggest_float(name="Fz", low = 40, high = 100)
      
     # Reset the simulation
     simulator.reset()
@@ -77,29 +77,36 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     sim_options = simulator.options
 
     
-
-    FORWARD_JUMP = 0 #works but not ideal
+    # the only 3 type of jumps to opptimze
+    FORWARD_JUMP = 0 
     LATERAL_JUMP_LEFT = 1 #
-    LATERAL_JUMP_RIGHT = 2
-    TWIST_CLOCK_JUMP = 3 #works but not ideal
-    TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
+    TWIST_CLOCK_JUMP = 3 
+    speed = False #to optimize the fastest 
 
-    jump_type =  TWIST_COUNTER_CLOCK_JUMP
+    jump_type =  TWIST_CLOCK_JUMP
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=Fx, Fy=Fy, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=f1, Fx=0, Fy=Fy, Fz=Fz)
 
     # Determine number of jumps to simulate
-    n_jumps = 6  # Feel free to change this number
+    n_jumps = 10  # Feel free to change this number
     jump_duration = force_profile.impulse_duration() + force_profile.idle_duration()  # TODO: determine how long a jump takes
     n_steps = int(n_jumps * jump_duration / sim_options.timestep)
 
     total_time = n_steps * sim_options.timestep #to measure fastest controller
     #max_height = -99 # to initialize tracking
-    start_pos = simulator.get_base_position()[0] #to measure fastest controller
+    start_pos = simulator.get_base_position() #to measure fastest controller
+    _,_,yaw_start = simulator.get_base_orientation_roll_pitch_yaw() #to measure fastest controller
     yaw_previous = 0
     yaw_offset = 0
+    max_roll = 0
+    max_pitch = 0
+    nbr_step_in_air = 0
+    nbr_step_on_ground = 0
+    reward_for_time_in_air = 0.0005
+    punishment_deviation = 2
+    punishment_tilt = 4
     for _ in range(n_steps):
         # Step the oscillator
         force_profile.step(sim_options.timestep)
@@ -115,35 +122,33 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
         on_ground = any(simulator.get_foot_contacts()) # TODO: how do we know we're on the ground?
         if on_ground:
             tau += virtual_model(simulator)
+            nbr_step_on_ground += 1
         else :
-            if jump_type == 0 :
+            nbr_step_in_air += 1
+            if jump_type == FORWARD_JUMP :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0.075,-0.0838, -0.275],[0.075,0.0838, -0.275],[0.025,-0.0838, -0.475],[0.025,0.0838, -0.475]])
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 1 :
+            elif jump_type == LATERAL_JUMP_LEFT :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.1, -0.3],[0,0.4, 0.1],[0,-0.1, -0.2],[0,0.4, 0.1]])
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 2 :
-                tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,-0.4, 0.1],[0,0.1, -0.3],[0,-0.4, 0.1],[0,0.1, -0.2]])
-                tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 3 :
+            elif jump_type == TWIST_CLOCK_JUMP :
                 tau -= nominal_position(simulator)
                 des_foot_position = np.array([[0,-0.2, -0.2],[0,0, -0.2],[0,0, -0.2],[0,0.2, -0.2]]) #sifht d'environ -0.1 pour les jambes avant et + 0.1 pou les jambes arriere
                 tau += nominal_position(simulator, des_foot_position)
-            elif jump_type == 4 :
-                tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,0, -0.2],[0,0.2, -0.2],[0,-0.2, -0.2],[0,0, -0.2]])
-                tau += nominal_position(simulator, des_foot_position)
         #update the yaw with each step ans makes it possible to count turns
-        _, _, yaw = simulator.get_base_orientation_roll_pitch_yaw()
+        roll, pitch, yaw = simulator.get_base_orientation_roll_pitch_yaw()
         if (yaw - yaw_previous) >np.pi:
             yaw_offset -= 2*np.pi
         elif(yaw - yaw_previous) < -np.pi:
             yaw += 2*np.pi
         yaw_previous = yaw
         yaw_final = yaw + yaw_offset
+        if (abs(max_pitch) < abs(pitch)):
+            max_pitch = pitch
+        if(abs(max_roll) < abs(roll)):
+            max_roll = roll
         # Set the motor commands and step the simulation
         simulator.set_motor_targets(tau)
         simulator.step()
@@ -161,35 +166,44 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     
     position = simulator.get_base_position()
     
-    
-    if jump_type == FORWARD_JUMP:
+    if not(speed) and (jump_type == FORWARD_JUMP):
         # Further along X
         objective_value = position[0]
+        if abs(position[1]) > 0.05*position[0]:
+            objective_value -= punishment_deviation
+
+        if (abs(max_roll) or abs(max_pitch) or abs(yaw_final)) > np.pi*0.1:
+            objective_value -= punishment_tilt
+        
+
 
     elif jump_type == LATERAL_JUMP_LEFT:
         # Positive Y direction
         objective_value = position[1]
-
-    elif jump_type == LATERAL_JUMP_RIGHT:
-        # Negative Y direction (absolute)
-        objective_value = -position[1]  # or abs(position[1])
+        if abs(position[0]) > 0.05*position[1]:
+            objective_value -= punishment_deviation
+        if ((abs(yaw_final) or abs(max_pitch)) > np.pi*0.125) or (abs(max_roll) > np.pi*0.5):
+            objective_value -= punishment_tilt
 
     elif jump_type == TWIST_CLOCK_JUMP:
         # Max clockwise twist → NEGATIVE yaw (assuming right-hand rule)
         objective_value = -yaw_final #proble yax est en -pi et +pi et prends en compte que la position finale
-
-    elif jump_type == TWIST_COUNTER_CLOCK_JUMP:
-        # Max counterclockwise twist → POSITIVE yaw
-        objective_value = yaw_final
-
-    return objective_value
-    """
+        if (abs(max_roll) or abs(max_pitch) ) > np.pi*0.25:
+            objective_value -= punishment_tilt*(-yaw_final)/(2*np.pi)
+        if (np.sqrt(position[0]**2 + position[1]**2) >1):
+            objective_value -= punishment_deviation*(-yaw_final)/(2*np.pi)
+    
     # TO MEASURE FASTEST
     
-    end_pos = simulator.get_base_position()[0]
-    velocity = (end_pos - start_pos) / total_time 
-    return velocity
-    """
+    end_pos = simulator.get_base_position()
+    average_velocity = (end_pos - start_pos) / total_time 
+    if speed and (jump_type == FORWARD_JUMP):
+        # Further along X
+        objective_value = average_velocity[0]
+
+
+    return objective_value
+    
 
 
 if __name__ == "__main__":
