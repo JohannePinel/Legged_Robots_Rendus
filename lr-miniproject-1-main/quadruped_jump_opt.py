@@ -66,9 +66,9 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     #variable1 = trial.suggest_float(name="variable1", low=0.0, high=1.0)
     f0 = trial.suggest_float(name="f0", low = 2, high = 10)
     #f1 = trial.suggest_float(name="f1", low = 2, high = 6)
-    #Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
-    Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
-    Fz = trial.suggest_float(name="Fz", low = 100, high = 150)
+    Fx = trial.suggest_float(name="Fx", low = 100, high = 200)
+    #Fy = trial.suggest_float(name="Fy", low = 100, high = 200)
+    Fz = trial.suggest_float(name="Fz", low = 100, high = 250)
      
     # Reset the simulation
     simulator.reset()
@@ -78,16 +78,16 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
 
     
     # the only 3 type of jumps to opptimze
-    FORWARD_JUMP = 0 
+    FORWARD_JUMP = 0
     LATERAL_JUMP_LEFT = 1 #
     TWIST_CLOCK_JUMP = 3
-    speed = True #to optimize the fastest 
+    speed = False #to optimize the fastest 
 
-    jump_type =  LATERAL_JUMP_LEFT
+    jump_type =  FORWARD_JUMP
 
     
     # TODO: set parameters for the foot force profile here
-    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=0, Fy=Fy, Fz=Fz)
+    force_profile = FootForceProfile(f0=f0, f1=0.2, Fx=Fx, Fy=0, Fz=Fz)
 
     # Determine number of jumps to simulate
     n_jumps = 1  # Feel free to change this number
@@ -169,7 +169,8 @@ def evaluate_jumping(trial: Trial, simulator: QuadSimulator) -> float:
     if not(speed) and (jump_type == FORWARD_JUMP):
         # Further along X
         objective_value = position[0]
- 
+        if not(all(simulator.get_foot_contacts())):
+            objective_value -= punishment_not_full_contact
         if (abs(max_roll) or abs(max_pitch) or abs(yaw_final)) > np.pi*0.1:
             objective_value -= punishment_tilt
         
