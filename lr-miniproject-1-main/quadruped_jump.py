@@ -27,7 +27,7 @@ def quadruped_jump():
     TWIST_CLOCK_JUMP = 3 #works but not ideal
     TWIST_COUNTER_CLOCK_JUMP = 4 #works but not ideal
 
-    jump_type = FORWARD_JUMP
+    jump_type = LATERAL_JUMP_LEFT
 
     if jump_type == FORWARD_JUMP :
         #force_profile = FootForceProfile(f0= 3, f1=1, Fx=100, Fy=0, Fz=100) #force profile for a forward jump
@@ -38,7 +38,9 @@ def quadruped_jump():
     elif jump_type == LATERAL_JUMP_LEFT :
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
         #Force profile furthest
-        force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
+        #force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
+        force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=98.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
+   
     elif jump_type == LATERAL_JUMP_RIGHT :
         force_profile = FootForceProfile(f0=2, f1=0.5, Fx=0, Fy=-100, Fz=100) # pour lateral jump RIGHT
     elif jump_type == TWIST_CLOCK_JUMP:
@@ -271,27 +273,45 @@ def quadruped_jump():
     pitch = np.array(pitch_history)
     t = np.array(t_history)
 
-    threshold_roll = 0.04      # radians, adjust to what you consider 'stable'
-    threshold_pitch = 0.35   # radians, adjust to what you consider 'stable'
- 
+    if jump_type == 0 :
+        threshold_roll = 0.025      # radians, adjust to what you consider 'stable'
+        threshold_pitch = 0.4   # radians, adjust to what you consider 'stable'
+    elif jump_type == 1 :
+        threshold_roll = 0.5      # radians, adjust to what you consider 'stable'
+        threshold_pitch = 0.12 
     fig4, axs4 = plt.subplots(2, 1, sharex=True, figsize=(9,5))
     if recorded_steps > 0:
         axs4[0].plot(t, roll, label='roll')
-        axs4[0].axhline(threshold_roll, linestyle='--', label=f'+{threshold_roll} rad')
+        if jump_type == 1 :
+            axs4[0].axhline(threshold_roll/4, linestyle='--', label=f'+{threshold_roll}/4 rad')
+        else :
+            axs4[0].axhline(threshold_roll, linestyle='--', label=f'+{threshold_roll} rad')
         axs4[0].axhline(-threshold_roll, linestyle='--', label=f'-{threshold_roll} rad')
         
         axs4[0].set_ylabel('roll [rad]')
+        if jump_type == 0 :
+            axs4[0].set_ylim(-0.1, 0.1) 
+        elif jump_type == 1 :
+            axs4[1].set_ylim(-1, 1)
+        
         axs4[0].legend(); axs4[0].grid(True)
 
         axs4[1].plot(t, pitch, label='pitch')
-        axs4[1].axhline(threshold_pitch, linestyle='--', label=f'+{threshold_pitch} rad')
+        if jump_type == 1 :
+            axs4[1].axhline(threshold_pitch/4, linestyle='--', label=f'+{threshold_pitch}/4 rad')
+        else :
+            axs4[1].axhline(threshold_pitch, linestyle='--', label=f'+{threshold_pitch} rad')
         axs4[1].axhline(-threshold_pitch, linestyle='--', label=f'-{threshold_pitch} rad')
         
         axs4[1].set_xlabel('time [s]')
         axs4[1].set_ylabel('pitch [rad]')
+        if jump_type == 0 :
+            axs4[1].set_ylim(-1, 1)
+        elif jump_type == 1 :
+            axs4[1].set_ylim(-0.5, 0.5)
         axs4[1].legend(); axs4[1].grid(True)
 
-        plt.suptitle('Body orientation : Roll & Pitch')
+        plt.suptitle('Body orientation : Roll & Pitch - Lateral Jump, Fy + 25N')
         plt.tight_layout()
         plt.show()
     else:
