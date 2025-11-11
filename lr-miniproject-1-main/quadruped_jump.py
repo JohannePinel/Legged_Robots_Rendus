@@ -47,10 +47,10 @@ def quadruped_jump():
         #force_profile = FootForceProfile(f0=2, f1=0.5, Fx=100, Fy=100, Fz=100) # pour lateral jump left
 
         #Force profile standard, used for sweep plots
-        force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) #j'aime beaucoup le
+        force_profile = FootForceProfile(f0 = 3.391902093868576, f1=0.8953328393042338, Fx=0, Fy=73.8053238238212, Fz=84.29484432653639) 
         
         #Force profile furthest
-        #force_profile = FootForceProfile(f0 = 2.4469872242469295, f1=0.2, Fx=0, Fy=166.74710973091592, Fz=143.41135021231855) #j'aime beaucoup le
+        #force_profile = FootForceProfile(f0 = 2.4469872242469295, f1=0.2, Fx=0, Fy=166.74710973091592, Fz=143.41135021231855)
   
         
     elif jump_type == LATERAL_JUMP_RIGHT :
@@ -71,7 +71,7 @@ def quadruped_jump():
 
     elif jump_type == TWIST_COUNTER_CLOCK_JUMP :
         #Original tests :
-        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) #force profile for a twist more less stable
+        force_profile = FootForceProfile(f0= 3.925879806965068, f1=0.9983689107917987, Fx=0, Fy=45, Fz=100) 
 
     
     # Determine number of jumps to simulate
@@ -143,7 +143,7 @@ def quadruped_jump():
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 3 :
                 tau -= nominal_position(simulator)
-                des_foot_position = np.array([[0,-0.2, -0.2],[0,0, -0.2],[0,0, -0.2],[0,0.2, -0.2]]) #sifht d'environ -0.1 pour les jambes avant et + 0.1 pou les jambes arriere
+                des_foot_position = np.array([[0,-0.2, -0.2],[0,0, -0.2],[0,0, -0.2],[0,0.2, -0.2]]) #shift d'environ -0.1 pour les jambes avant et + 0.1 pour les jambes arriere
                 tau += nominal_position(simulator, des_foot_position)
             elif jump_type == 4 :
                 tau -= nominal_position(simulator)
@@ -199,7 +199,7 @@ def quadruped_jump():
 
         # roll and pitch recording
         # record time and orientation each step
-        t_history.append(simulator.time())  # or len(t_history)*sim_options.timestep
+        t_history.append(simulator.time())  
         rpy = simulator.get_base_orientation_roll_pitch_yaw()
         roll_history.append(rpy[0])
         pitch_history.append(rpy[1])
@@ -358,11 +358,9 @@ def quadruped_jump():
 
 def nominal_position(
     simulator: QuadSimulator,
-    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]), #position juste en dessous des hanche
+    des_foot_pos = np.array([[0,-0.0838, -0.275],[0,0.0838, -0.275],[0,-0.0838, -0.2],[0,0.0838, -0.2]]), # right below the hips
     #des_foot_pos = np.array([[0,-0.0838, -0.325],[0,0.0838, -0.325],[0,-0.0838, -0.25],[0,0.0838, -0.25]]), #CoM high
     #des_foot_pos = np.array([[0,-0.0838, -0.125],[0,0.0838, -0.125],[0,-0.0838, -0.05],[0,0.0838, -0.05]]), #CoM very low
-
-
     kpCartesian = np.diag([400,400,200]),# valeur arbitraire
     kdCartesian = np.diag([50,50,30]),# valeur arbitraire
     kdJoint = np.diag([0.1,0.1,0.1])# valeur arbitraire
@@ -419,7 +417,6 @@ def gravity_compensation(
     # All motor torques are in a single array
     tau = np.zeros(N_JOINTS * N_LEGS)
     gnd_contact = simulator.get_foot_contacts()
-    # est ce qu'il faut juste diviser par 4 ou savoir sur combien de pied exactement il repose ???git
     if sum(gnd_contact) != 0:
         foot_div = 1/sum(gnd_contact) #permet de savoir sur cobien de pied doit reposer le robot
     else:
